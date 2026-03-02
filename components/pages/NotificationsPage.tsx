@@ -30,14 +30,12 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
     const loadOffers = async () => {
       const supabase = createClient();
       try {
-        // Requests FOR my books (I'm the owner)
         const { data: incomingData } = await supabase
           .from('swap_offers')
           .select('*')
           .eq('book_owner_id', user.id)
           .order('created_at', { ascending: false });
 
-        // Requests I made (I'm the requester)
         const { data: outgoingData } = await supabase
           .from('swap_offers')
           .select('*')
@@ -59,8 +57,28 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
     const supabase = createClient();
     try {
       const swapCode = Math.random().toString(36).substr(2, 8).toUpperCase();
-      const { error } = await supabase.from('swap_offers').update({ status: 'accepted', swap_code: swapCode }).eq('id', offerId);
+
+      const { error } = await supabase
+        .from('swap_offers')
+        .update({ status: 'accepted', swap_code: swapCode })
+        .eq('id', offerId);
       if (error) throw error;
+
+      const offer = incoming.find(o => o.id === offerId);
+      if (offer) {
+        await supabase
+          .from('books')
+          .update({ is_available: false })
+          .eq('id', offer.book_id);
+
+        await supabase
+          .from('swap_offers')
+          .update({ status: 'declined' })
+          .eq('book_id', offer.book_id)
+          .eq('status', 'pending')
+          .neq('id', offerId);
+      }
+
       setIncoming(incoming.map(o => o.id === offerId ? { ...o, status: 'accepted', swap_code: swapCode } : o));
     } catch (err) {
       alert('Erreur : ' + err);
