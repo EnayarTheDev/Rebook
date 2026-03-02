@@ -41,18 +41,15 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
       const supabase = createClient();
       let query = supabase
         .from('books')
-        .select('*')
-        .eq('is_available', true);
+        .select('*');
 
       if (filters.genre) query = query.eq('subject', filters.genre);
       if (filters.condition) query = query.eq('condition', filters.condition);
 
       const { data: booksData, error } = await query.order('created_at', { ascending: false });
       if (error || !booksData) { setBooks([]); setIsLoading(false); return; }
-
       if (booksData.length === 0) { setBooks([]); setIsLoading(false); return; }
 
-      // Fetch profiles separately
       const userIds = [...new Set(booksData.map(b => b.user_id))];
       const { data: profilesData } = await supabase
         .from('profiles')
@@ -106,13 +103,28 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {books.map(book => (
-            <div key={book.id} onClick={() => onSelectBook(book.id)} className="bg-white rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-all cursor-pointer overflow-hidden border-2 border-gray-200 hover:border-green-500">
+            <div
+              key={book.id}
+              onClick={() => book.is_available && onSelectBook(book.id)}
+              className={`bg-white rounded-lg shadow-md overflow-hidden border-2 transition-all ${
+                book.is_available
+                  ? 'hover:shadow-xl hover:scale-105 cursor-pointer border-gray-200 hover:border-green-500'
+                  : 'cursor-not-allowed border-gray-200 opacity-75'
+              }`}
+            >
               <div className="relative h-40 overflow-hidden">
                 {book.cover_url ? (
                   <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="bg-gradient-to-r from-green-100 to-blue-100 w-full h-full flex items-center justify-center">
                     <span className="text-gray-400 text-sm font-medium">Pas de photo</span>
+                  </div>
+                )}
+                {!book.is_available && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <span className="text-white font-black text-3xl tracking-widest rotate-[-15deg] border-4 border-white px-3 py-1">
+                      OUT OF STOCK
+                    </span>
                   </div>
                 )}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
@@ -129,7 +141,11 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
                 <p className="text-sm text-gray-600 mb-2">Proposé par : <span className="font-semibold">{book.owner_name}</span></p>
                 {book.description && <p className="text-xs text-gray-600 line-clamp-2">{book.description}</p>}
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-lg font-bold text-green-600">Échange gratuit</p>
+                  {book.is_available ? (
+                    <p className="text-lg font-bold text-green-600">Échange gratuit</p>
+                  ) : (
+                    <p className="text-lg font-bold text-red-500">Non disponible</p>
+                  )}
                 </div>
               </div>
             </div>
