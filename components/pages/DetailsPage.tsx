@@ -3,232 +3,217 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-interface SwapOffer {
+interface Book {
   id: string;
-  book_id: string;
-  requester_id: string;
-  requester_name: string;
-  requester_email: string;
-  requested_book_title: string;
-  offered_books: string[];
-  offered_book_ids: string[];
-  status: 'pending' | 'accepted' | 'declined';
-  swap_code?: string;
-  created_at: string;
+  title: string;
+  subject: string;
+  condition: string;
+  description: string;
+  user_id: string;
+  owner_name: string;
+  owner_email: string;
+  is_available: boolean;
+  cover_url: string | null;
 }
 
-interface NotificationsPageProps {
+interface UserBook {
+  id: string;
+  title: string;
+  subject: string;
+  condition: string;
+}
+
+interface DetailsPageProps {
+  bookId: string;
+  setCurrentPage: (page: string) => void;
   user: any;
 }
 
-export default function NotificationsPage({ user }: NotificationsPageProps) {
-  const [incoming, setIncoming] = useState<SwapOffer[]>([]);
-  const [outgoing, setOutgoing] = useState<SwapOffer[]>([]);
+export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPageProps) {
+  const [book, setBook] = useState<Book | null>(null);
+  const [userBooks, setUserBooks] = useState<UserBook[]>([]);
+  const [selectedBooks, setSelectedBooks] = useState<string[]>([]);
+  const [showSwapForm, setShowSwapForm] = useState(false);
+  const [swapSuccess, setSwapSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
 
-  useEffect(() => {
-    const loadOffers = async () => {
-      const supabase = createClient();
-      try {
-        const { data: incomingData } = await supabase
-          .from('swap_offers')
-          .select('*')
-          .eq('book_owner_id', user.id)
-          .order('created_at', { ascending: false });
+  useEffect(() => { loadBookDetails(); }, [bookId]);
 
-        const { data: outgoingData } = await supabase
-          .from('swap_offers')
-          .select('*')
-          .eq('requester_id', user.id)
-          .order('created_at', { ascending: false });
+  const loadBookDetails = async () => {
+    const supabase = createClient();
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .eq('id', bookId)
+        .single();
 
-        setIncoming(incomingData || []);
-        setOutgoing(outgoingData || []);
-      } catch (err) {
-        console.error('Erreur chargement offres:', err);
-      } finally {
-        setIsLoading(false);
+      if (error) throw error;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .eq('id', data.user_id)
+        .single();
+
+      setBook({
+        ...data,
+        owner_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Inconnu',
+        owner_email: profile?.email || '',
+      });
+
+      if (user) {
+        const { data: userBooksData } = await supabase
+          .from('books')
+          .select('id, title, subject, condition')
+          .eq('user_id', user.id)
+          .eq('is_available', true);
+        setUserBooks(userBooksData || []);
       }
-    };
-    loadOffers();
-  }, [user.id]);
-
-  const handleAccept = async (offerId: string) => {
-    const supabase = createClient();
-    try {
-      const swapCode = Math.random().toString(36).substr(2, 8).toUpperCase();
-
-      const { error } = await supabase
-        .from('swap_offers')
-        .update({ status: 'accepted', swap_code: swapCode })
-        .eq('id', offerId);
-      if (error) throw error;
-
-      const offer = incoming.find(o => o.id === offerId);
-      if (offer) {
-        // Mark requested book as unavailable
-        await supabase.from('books').update({ is_available: false }).eq('id', offer.book_id);
-
-        // Mark offered books as unavailable
-        if (offer.offered_book_ids && offer.offered_book_ids.length > 0) {
-          await supabase.from('books').update({ is_available: false }).in('id', offer.offered_book_ids);
-        }
-
-        // Decline all other pending offers for the same book
-        await supabase
-          .from('swap_offers')
-          .update({ status: 'declined' })
-          .eq('book_id', offer.book_id)
-          .eq('status', 'pending')
-          .neq('id', offerId);
-      }
-
-      setIncoming(incoming.map(o => o.id === offerId ? { ...o, status: 'accepted', swap_code: swapCode } : o));
     } catch (err) {
-      alert('Erreur : ' + err);
+      console.error('Erreur chargement livre:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDecline = async (offerId: string) => {
+  const handleInitiateSwap = async () => {
+    if (!user) { alert('Veuillez vous connecter pour échanger des livres'); return; }
+    if (selectedBooks.length === 0) { alert('Veuillez sélectionner au moins un livre'); return; }
+    if (!book) return;
+
     const supabase = createClient();
     try {
-      const { error } = await supabase.from('swap_offers').update({ status: 'declined' }).eq('id', offerId);
+      const offeredBookTitles = selectedBooks.map(id => userBooks.find(b => b.id === id)?.title || 'Inconnu');
+      const { error } = await supabase.from('swap_offers').insert([{
+        book_id: bookId,
+        book_owner_id: book.user_id,
+        requester_id: user.id,
+        requester_name: user.user_metadata?.first_name || user.email?.split('@')[0] || 'Utilisateur',
+        requester_email: user.email,
+        requested_book_title: book.title,
+        offered_books: offeredBookTitles,
+        offered_book_ids: selectedBooks,
+        status: 'pending',
+      }]);
+
       if (error) throw error;
-      setIncoming(incoming.map(o => o.id === offerId ? { ...o, status: 'declined' } : o));
-    } catch (err) {
-      alert('Erreur : ' + err);
+      setSwapSuccess(true);
+    } catch (err: any) {
+      alert("Erreur lors de la demande d'échange : " + err.message);
     }
   };
 
-  const handleCancel = async (offerId: string) => {
-    const supabase = createClient();
-    try {
-      const { error } = await supabase.from('swap_offers').delete().eq('id', offerId);
-      if (error) throw error;
-      setOutgoing(outgoing.filter(o => o.id !== offerId));
-    } catch (err) {
-      alert('Erreur : ' + err);
-    }
-  };
-
-  if (isLoading) return <div className="text-center py-12">Chargement des notifications...</div>;
-
-  const pendingIncoming = incoming.filter(o => o.status === 'pending').length;
+  if (isLoading) return <div className="text-center py-12">Chargement...</div>;
+  if (!book) return <div className="text-center text-gray-600 py-12">Livre introuvable</div>;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Notifications</h1>
+    <div className="max-w-2xl mx-auto">
+      <button onClick={() => setCurrentPage('browse')} className="mb-6 text-green-600 hover:text-green-700 font-semibold">
+        ← Retour à la liste
+      </button>
 
-      <div className="flex gap-4 border-b border-gray-200 mb-8">
-        <button
-          onClick={() => setActiveTab('incoming')}
-          className={`pb-3 font-semibold transition-colors ${activeTab === 'incoming' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:text-gray-900'}`}
-        >
-          Demandes reçues {pendingIncoming > 0 && <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{pendingIncoming}</span>}
-        </button>
-        <button
-          onClick={() => setActiveTab('outgoing')}
-          className={`pb-3 font-semibold transition-colors ${activeTab === 'outgoing' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:text-gray-900'}`}
-        >
-          Mes demandes ({outgoing.length})
-        </button>
-      </div>
-
-      {activeTab === 'incoming' && (
-        <div className="space-y-4">
-          {incoming.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-12 text-center">
-              <p className="text-gray-600 text-lg">Aucune demande reçue</p>
+      <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="rounded-lg mb-6 overflow-hidden">
+          {book.cover_url && (
+            <img src={book.cover_url} alt={book.title} className="w-full h-56 object-cover" />
+          )}
+          <div className="bg-gradient-to-r from-green-100 to-blue-100 p-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">{book.title}</h1>
+            <div className="flex gap-4 text-gray-700 flex-wrap">
+              <span className="font-semibold">{book.subject}</span>
+              <span className="inline-block bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                {book.condition.charAt(0).toUpperCase() + book.condition.slice(1)}
+              </span>
             </div>
-          ) : incoming.map(offer => (
-            <div key={offer.id} className={`rounded-lg p-6 border-2 ${offer.status === 'pending' ? 'bg-blue-50 border-blue-200' : offer.status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">{offer.requester_name} souhaite échanger</h3>
-                  <p className="text-gray-600">Votre livre : <span className="font-semibold">{offer.requested_book_title}</span></p>
-                  <p className="text-sm text-gray-500 mt-1">{new Date(offer.created_at).toLocaleDateString('fr-FR')}</p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${offer.status === 'pending' ? 'bg-blue-200 text-blue-800' : offer.status === 'accepted' ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-800'}`}>
-                  {offer.status === 'pending' ? 'En attente' : offer.status === 'accepted' ? 'Acceptée' : 'Refusée'}
-                </span>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg mb-4">
-                <p className="text-sm font-semibold text-gray-700 mb-2">Livres proposés en échange :</p>
-                <ul className="space-y-1">
-                  {offer.offered_books?.map((book, idx) => <li key={idx} className="text-gray-700">• {book}</li>)}
-                </ul>
-              </div>
-
-              {offer.status === 'accepted' && offer.swap_code && (
-                <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-4 rounded">
-                  <p className="text-sm text-gray-700 mb-1">Code d'échange :</p>
-                  <p className="text-2xl font-bold text-green-700">{offer.swap_code}</p>
-                  <p className="text-xs text-gray-600 mt-2">Présentez ce code avec vos livres au bureau d'administration</p>
-                </div>
-              )}
-
-              {offer.status === 'pending' && (
-                <div className="flex gap-3">
-                  <button onClick={() => handleAccept(offer.id)} className="flex-1 bg-green-500 text-white font-bold py-2 rounded-lg hover:bg-green-600 transition-colors">Accepter</button>
-                  <button onClick={() => handleDecline(offer.id)} className="flex-1 bg-gray-300 text-gray-800 font-bold py-2 rounded-lg hover:bg-gray-400 transition-colors">Refuser</button>
-                </div>
-              )}
-
-              <p className="text-xs text-gray-600 mt-4">Contact : {offer.requester_email}</p>
-            </div>
-          ))}
+          </div>
         </div>
-      )}
 
-      {activeTab === 'outgoing' && (
-        <div className="space-y-4">
-          {outgoing.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-12 text-center">
-              <p className="text-gray-600 text-lg">Vous n'avez fait aucune demande d'échange</p>
-            </div>
-          ) : outgoing.map(offer => (
-            <div key={offer.id} className={`rounded-lg p-6 border-2 ${offer.status === 'pending' ? 'bg-yellow-50 border-yellow-200' : offer.status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Demande pour : <span className="text-green-700">{offer.requested_book_title}</span></h3>
-                  <p className="text-sm text-gray-500 mt-1">{new Date(offer.created_at).toLocaleDateString('fr-FR')}</p>
+        {book.description && (
+          <div className="mb-6">
+            <h3 className="font-bold text-gray-800 mb-2">Description</h3>
+            <p className="text-gray-700">{book.description}</p>
+          </div>
+        )}
+
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border-l-4 border-green-500 mb-6">
+          <h3 className="font-bold text-gray-800 mb-2">Proposé par</h3>
+          <p className="text-gray-700 mb-1">{book.owner_name}</p>
+          <p className="text-sm text-gray-600">{book.owner_email}</p>
+        </div>
+
+        <div className="text-lg font-bold text-green-600 mb-6">Échange gratuit</div>
+
+        {!book.is_available ? (
+          <div className="bg-red-50 border-2 border-red-300 p-4 rounded-lg text-center">
+            <p className="text-2xl font-black text-red-600 tracking-widest">OUT OF STOCK</p>
+            <p className="text-sm text-red-500 mt-1">Ce livre n'est plus disponible</p>
+          </div>
+        ) : user && user.id !== book.user_id ? (
+          showSwapForm ? (
+            <div className="space-y-3 pt-4 bg-blue-50 p-4 rounded-lg">
+              <h3 className="font-bold text-gray-800 mb-3">Sélectionnez les livres à proposer en échange</h3>
+              {userBooks.length > 0 ? (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {userBooks.map(userBook => (
+                    <label key={userBook.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-green-500 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedBooks.includes(userBook.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedBooks([...selectedBooks, userBook.id]);
+                          else setSelectedBooks(selectedBooks.filter(id => id !== userBook.id));
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800">{userBook.title}</p>
+                        <p className="text-xs text-gray-600">{userBook.subject} - {userBook.condition}</p>
+                      </div>
+                    </label>
+                  ))}
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${offer.status === 'pending' ? 'bg-yellow-200 text-yellow-800' : offer.status === 'accepted' ? 'bg-green-200 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {offer.status === 'pending' ? 'En attente' : offer.status === 'accepted' ? 'Acceptée' : 'Refusée'}
-                </span>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg mb-4">
-                <p className="text-sm font-semibold text-gray-700 mb-2">Vous avez proposé en échange :</p>
-                <ul className="space-y-1">
-                  {offer.offered_books?.map((book, idx) => <li key={idx} className="text-gray-700">• {book}</li>)}
-                </ul>
-              </div>
-
-              {offer.status === 'accepted' && offer.swap_code && (
-                <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-4 rounded">
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Votre échange a été accepté !</p>
-                  <p className="text-sm text-gray-700 mb-1">Code d'échange :</p>
-                  <p className="text-2xl font-bold text-green-700">{offer.swap_code}</p>
-                  <p className="text-xs text-gray-600 mt-2">Présentez ce code avec vos livres au bureau d'administration</p>
-                </div>
+              ) : (
+                <p className="text-gray-600 text-sm">Vous n'avez pas encore proposé de livres.</p>
               )}
-
-              {offer.status === 'declined' && (
-                <p className="text-sm text-red-600 font-semibold">Votre demande a été refusée.</p>
-              )}
-
-              {offer.status === 'pending' && (
-                <button onClick={() => handleCancel(offer.id)} className="mt-2 text-sm text-red-600 hover:text-red-700 font-semibold underline">
-                  Annuler la demande
+              <div className="flex gap-2 pt-3">
+                <button
+                  onClick={handleInitiateSwap}
+                  disabled={selectedBooks.length === 0}
+                  className={`flex-1 font-bold py-2 rounded-lg transition-all ${selectedBooks.length > 0 ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                >
+                  🔄 Proposer l'échange
                 </button>
-              )}
+                <button onClick={() => setShowSwapForm(false)} className="px-4 font-semibold text-gray-700 border-2 border-gray-300 rounded-lg hover:bg-gray-50">
+                  Annuler
+                </button>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            <button
+              onClick={() => { if (userBooks.length === 0) setCurrentPage('offer'); else setShowSwapForm(true); }}
+              className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+            >
+              {userBooks.length === 0 ? "Proposer un livre d'abord" : '🔄 Demander l\'échange'}
+            </button>
+          )
+        ) : user && user.id === book.user_id ? (
+          <div className="bg-gray-100 p-4 rounded-lg text-center text-gray-600">
+            <p className="font-semibold">C'est votre livre</p>
+          </div>
+        ) : (
+          <button onClick={() => window.location.href = '/auth/request-approval'} className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all">
+            Inscrivez-vous pour échanger
+          </button>
+        )}
+
+        {swapSuccess && (
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 rounded-lg font-semibold mt-4">
+            ✓ Demande d'échange envoyée — consultez vos notifications pour les mises à jour.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
