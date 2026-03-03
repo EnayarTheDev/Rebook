@@ -39,9 +39,7 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
     setIsLoading(true);
     try {
       const supabase = createClient();
-      let query = supabase
-        .from('books')
-        .select('*');
+      let query = supabase.from('books').select('*');
 
       if (filters.genre) query = query.eq('subject', filters.genre);
       if (filters.condition) query = query.eq('condition', filters.condition);
@@ -123,7 +121,7 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
                 {!book.is_available && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                     <span className="text-white font-black text-3xl tracking-widest rotate-[-15deg] border-4 border-white px-3 py-1">
-                      OUT OF STOCK
+                      SWAP DONE
                     </span>
                   </div>
                 )}
@@ -144,7 +142,7 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
                   {book.is_available ? (
                     <p className="text-lg font-bold text-green-600">Échange gratuit</p>
                   ) : (
-                    <p className="text-lg font-bold text-red-500">Non disponible</p>
+                    <p className="text-lg font-bold text-red-500">Échangé</p>
                   )}
                 </div>
               </div>
