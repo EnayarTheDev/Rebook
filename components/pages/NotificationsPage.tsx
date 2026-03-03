@@ -11,6 +11,7 @@ interface SwapOffer {
   requester_email: string;
   requested_book_title: string;
   offered_books: string[];
+  offered_book_ids: string[];
   status: 'pending' | 'accepted' | 'declined';
   swap_code?: string;
   created_at: string;
@@ -66,11 +67,15 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
 
       const offer = incoming.find(o => o.id === offerId);
       if (offer) {
-        await supabase
-          .from('books')
-          .update({ is_available: false })
-          .eq('id', offer.book_id);
+        // Mark requested book as unavailable
+        await supabase.from('books').update({ is_available: false }).eq('id', offer.book_id);
 
+        // Mark offered books as unavailable
+        if (offer.offered_book_ids && offer.offered_book_ids.length > 0) {
+          await supabase.from('books').update({ is_available: false }).in('id', offer.offered_book_ids);
+        }
+
+        // Decline all other pending offers for the same book
         await supabase
           .from('swap_offers')
           .update({ status: 'declined' })
