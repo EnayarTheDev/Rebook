@@ -44,7 +44,10 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
       if (filters.genre) query = query.eq('subject', filters.genre);
       if (filters.condition) query = query.eq('condition', filters.condition);
 
-      const { data: booksData, error } = await query.order('created_at', { ascending: false });
+      const { data: booksData, error } = await query
+        .order('is_available', { ascending: false })
+        .order('created_at', { ascending: false });
+
       if (error || !booksData) { setBooks([]); setIsLoading(false); return; }
       if (booksData.length === 0) { setBooks([]); setIsLoading(false); return; }
 
