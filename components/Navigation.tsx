@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
-import { Bell, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Bell, Settings, LogOut, ChevronDown, Handshake } from 'lucide-react';
 
 interface NavigationProps {
   currentPage: string;
@@ -40,15 +40,28 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
         gap: '24px',
       }}>
 
-        {/* Logo */}
+        {/* Logos */}
         <div
           onClick={() => { setCurrentPage('home'); router.push('/'); }}
-          style={{ cursor: 'pointer', flexShrink: 0 }}
+          style={{
+            cursor: 'pointer',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginRight: '24px',
+          }}
         >
           <img
             src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png"
             alt="ReBook"
             style={{ height: '32px', width: 'auto', display: 'block' }}
+          />
+          <Handshake size={20} strokeWidth={2} color="#2d8a4e" />
+          <img
+            src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png"
+            alt="Al Hanane 2"
+            style={{ height: '50px', width: 'auto', display: 'block' }}
           />
         </div>
 
@@ -169,7 +182,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
         </div>
 
         {/* Right side */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0, marginLeft: '24px' }}>
           {user ? (
             <div style={{ position: 'relative' }}>
               <button
