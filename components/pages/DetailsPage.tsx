@@ -147,7 +147,7 @@ export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPag
 
         {!book.is_available ? (
           <div className="bg-red-50 border-2 border-red-300 p-4 rounded-lg text-center">
-            <p className="text-2xl font-black text-red-600 tracking-widest">OUT OF STOCK</p>
+            <p className="text-2xl font-black text-red-600 tracking-widest"> SWAP DONE </p>
             <p className="text-sm text-red-500 mt-1">Ce livre n'est plus disponible</p>
           </div>
         ) : user && user.id !== book.user_id ? (
