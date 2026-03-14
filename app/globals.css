@@ -1,75 +1,187 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-
-@custom-variant dark (&:is(.dark *));
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&display=swap');
+@import "tailwindcss";
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --bg: #fdfbf7;
+  --fg: #2d2d2d;
+  --muted: #e5e0d8;
+  --accent: #ff4d4d;
+  --border: #2d2d2d;
+  --blue: #2d5da1;
+  --white: #ffffff;
+  --yellow: #fff9c4;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: 'Patrick Hand', cursive;
+  background-image: radial-gradient(#e5e0d8 1px, transparent 1px);
+  background-size: 24px 24px;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Kalam', cursive;
+  font-weight: 700;
+}
+
+.wobbly {
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+.wobbly-sm {
+  border-radius: 8px 4px 10px 3px / 4px 10px 3px 8px;
+}
+
+.wobbly-md {
+  border-radius: 30px 5px 25px 8px / 8px 25px 5px 30px;
+}
+
+.hard-shadow {
+  box-shadow: 4px 4px 0px 0px var(--fg);
+}
+
+.hard-shadow-lg {
+  box-shadow: 8px 8px 0px 0px var(--fg);
+}
+
+.hard-shadow-hover:hover {
+  box-shadow: 2px 2px 0px 0px var(--fg);
+  transform: translate(2px, 2px);
+}
+
+.btn-primary {
+  font-family: 'Patrick Hand', cursive;
+  background: var(--white);
+  color: var(--fg);
+  border: 3px solid var(--fg);
+  box-shadow: 4px 4px 0px 0px var(--fg);
+  transition: all 0.1s ease;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: var(--accent);
+  color: white;
+  box-shadow: 2px 2px 0px 0px var(--fg);
+  transform: translate(2px, 2px);
+}
+
+.btn-primary:active {
+  box-shadow: none;
+  transform: translate(4px, 4px);
+}
+
+.btn-secondary {
+  font-family: 'Patrick Hand', cursive;
+  background: var(--muted);
+  color: var(--fg);
+  border: 3px solid var(--fg);
+  box-shadow: 4px 4px 0px 0px var(--fg);
+  transition: all 0.1s ease;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--blue);
+  color: white;
+  box-shadow: 2px 2px 0px 0px var(--fg);
+  transform: translate(2px, 2px);
+}
+
+.btn-danger {
+  font-family: 'Patrick Hand', cursive;
+  background: var(--white);
+  color: var(--accent);
+  border: 3px solid var(--accent);
+  box-shadow: 4px 4px 0px 0px var(--accent);
+  transition: all 0.1s ease;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: var(--accent);
+  color: white;
+  box-shadow: 2px 2px 0px 0px var(--accent);
+  transform: translate(2px, 2px);
+}
+
+.card {
+  background: var(--white);
+  border: 2px solid var(--fg);
+  box-shadow: 4px 4px 0px 0px var(--fg);
+  border-radius: 30px 5px 25px 8px / 8px 25px 5px 30px;
+  padding: 1.5rem;
+}
+
+.card-yellow {
+  background: var(--yellow);
+  border: 2px solid var(--fg);
+  box-shadow: 4px 4px 0px 0px var(--fg);
+  border-radius: 30px 5px 25px 8px / 8px 25px 5px 30px;
+  padding: 1.5rem;
+}
+
+.input-wobbly {
+  font-family: 'Patrick Hand', cursive;
+  background: var(--white);
+  border: 2px solid var(--fg);
+  border-radius: 8px 4px 10px 3px / 4px 10px 3px 8px;
+  padding: 10px 16px;
+  width: 100%;
+  font-size: 1rem;
+  color: var(--fg);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.input-wobbly:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(45, 93, 161, 0.15);
+}
+
+.tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 60px;
+  height: 22px;
+  background: rgba(200, 200, 200, 0.5);
+  border: 1px solid rgba(150, 150, 150, 0.3);
+}
+
+.tack {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border: 2px solid var(--fg);
+  border-radius: 50%;
+}
+
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(-2deg); }
+}
+
+.bounce-gentle {
+  animation: bounce-gentle 3s ease-in-out infinite;
 }

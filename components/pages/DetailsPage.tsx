@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { BookOpen, ArrowLeft, ArrowLeftRight, Check, User } from 'lucide-react';
 
 interface Book {
   id: string;
@@ -43,32 +44,12 @@ export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPag
     const supabase = createClient();
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .eq('id', bookId)
-        .single();
-
+      const { data, error } = await supabase.from('books').select('*').eq('id', bookId).single();
       if (error) throw error;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, email')
-        .eq('id', data.user_id)
-        .single();
-
-      setBook({
-        ...data,
-        owner_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Inconnu',
-        owner_email: profile?.email || '',
-      });
-
+      const { data: profile } = await supabase.from('profiles').select('first_name, last_name, email').eq('id', data.user_id).single();
+      setBook({ ...data, owner_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Inconnu', owner_email: profile?.email || '' });
       if (user) {
-        const { data: userBooksData } = await supabase
-          .from('books')
-          .select('id, title, subject, condition')
-          .eq('user_id', user.id)
-          .eq('is_available', true);
+        const { data: userBooksData } = await supabase.from('books').select('id, title, subject, condition').eq('user_id', user.id).eq('is_available', true);
         setUserBooks(userBooksData || []);
       }
     } catch (err) {
@@ -82,22 +63,15 @@ export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPag
     if (!user) { alert('Veuillez vous connecter pour échanger des livres'); return; }
     if (selectedBooks.length === 0) { alert('Veuillez sélectionner au moins un livre'); return; }
     if (!book) return;
-
     const supabase = createClient();
     try {
       const offeredBookTitles = selectedBooks.map(id => userBooks.find(b => b.id === id)?.title || 'Inconnu');
       const { error } = await supabase.from('swap_offers').insert([{
-        book_id: bookId,
-        book_owner_id: book.user_id,
-        requester_id: user.id,
+        book_id: bookId, book_owner_id: book.user_id, requester_id: user.id,
         requester_name: user.user_metadata?.first_name || user.email?.split('@')[0] || 'Utilisateur',
-        requester_email: user.email,
-        requested_book_title: book.title,
-        offered_books: offeredBookTitles,
-        offered_book_ids: selectedBooks,
-        status: 'pending',
+        requester_email: user.email, requested_book_title: book.title,
+        offered_books: offeredBookTitles, offered_book_ids: selectedBooks, status: 'pending',
       }]);
-
       if (error) throw error;
       setSwapSuccess(true);
     } catch (err: any) {
@@ -105,114 +79,107 @@ export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPag
     }
   };
 
-  if (isLoading) return <div className="text-center py-12">Chargement...</div>;
-  if (!book) return <div className="text-center text-gray-600 py-12">Livre introuvable</div>;
+  if (isLoading) return <div style={{ textAlign: 'center', padding: '80px', fontFamily: 'Kalam, cursive', fontSize: '1.5rem' }}>Chargement...</div>;
+  if (!book) return <div style={{ textAlign: 'center', padding: '80px', fontFamily: 'Kalam, cursive', fontSize: '1.5rem' }}>Livre introuvable</div>;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <button onClick={() => setCurrentPage('browse')} className="mb-6 text-green-600 hover:text-green-700 font-semibold">
-        ← Retour à la liste
+    <div style={{ maxWidth: '680px', margin: '0 auto', padding: '40px 20px' }}>
+      <button onClick={() => setCurrentPage('browse')} style={{ fontFamily: 'Patrick Hand, cursive', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#2d8a4e', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'underline wavy #2d8a4e 2px' }}>
+        <ArrowLeft size={16} strokeWidth={2.5} /> Retour à la liste
       </button>
 
-      <div className="bg-white rounded-lg shadow-lg p-8">
-        <div className="rounded-lg mb-6 overflow-hidden">
-          {book.cover_url && (
-            <img src={book.cover_url} alt={book.title} className="w-full h-56 object-cover" />
-          )}
-          <div className="bg-gradient-to-r from-green-100 to-blue-100 p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">{book.title}</h1>
-            <div className="flex gap-4 text-gray-700 flex-wrap">
-              <span className="font-semibold">{book.subject}</span>
-              <span className="inline-block bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                {book.condition.charAt(0).toUpperCase() + book.condition.slice(1)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {book.description && (
-          <div className="mb-6">
-            <h3 className="font-bold text-gray-800 mb-2">Description</h3>
-            <p className="text-gray-700">{book.description}</p>
+      <div className="card" style={{ padding: '0', overflow: 'hidden', position: 'relative' }}>
+        <div className="tape" />
+        {book.cover_url ? (
+          <img src={book.cover_url} alt={book.title} style={{ width: '100%', height: '220px', objectFit: 'cover', borderBottom: '2px solid #2d2d2d' }} />
+        ) : (
+          <div style={{ width: '100%', height: '160px', background: '#f0faf4', borderBottom: '2px solid #2d2d2d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <BookOpen size={64} strokeWidth={1.5} color="#2d8a4e" />
           </div>
         )}
 
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border-l-4 border-green-500 mb-6">
-          <h3 className="font-bold text-gray-800 mb-2">Proposé par</h3>
-          <p className="text-gray-700 mb-1">{book.owner_name}</p>
-          <p className="text-sm text-gray-600">{book.owner_email}</p>
-        </div>
-
-        <div className="text-lg font-bold text-green-600 mb-6">Échange gratuit</div>
-
-        {!book.is_available ? (
-          <div className="bg-red-50 border-2 border-red-300 p-4 rounded-lg text-center">
-            <p className="text-2xl font-black text-red-600 tracking-widest"> SWAP DONE </p>
-            <p className="text-sm text-red-500 mt-1">Ce livre n'est plus disponible</p>
+        <div style={{ padding: '32px' }}>
+          <h1 style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', marginBottom: '12px', lineHeight: 1.2 }}>{book.title}</h1>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            <span style={{ fontFamily: 'Patrick Hand, cursive', background: '#f0faf4', border: '1px solid #2d2d2d', borderRadius: '4px 8px 3px 6px / 8px 3px 6px 4px', padding: '3px 12px' }}>{book.subject}</span>
+            <span style={{ fontFamily: 'Patrick Hand, cursive', background: '#e5e0d8', border: '1px solid #2d2d2d', borderRadius: '4px 8px 3px 6px / 8px 3px 6px 4px', padding: '3px 12px' }}>{book.condition.charAt(0).toUpperCase() + book.condition.slice(1)}</span>
           </div>
-        ) : user && user.id !== book.user_id ? (
-          showSwapForm ? (
-            <div className="space-y-3 pt-4 bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-bold text-gray-800 mb-3">Sélectionnez les livres à proposer en échange</h3>
-              {userBooks.length > 0 ? (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {userBooks.map(userBook => (
-                    <label key={userBook.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-green-500 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedBooks.includes(userBook.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) setSelectedBooks([...selectedBooks, userBook.id]);
-                          else setSelectedBooks(selectedBooks.filter(id => id !== userBook.id));
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800">{userBook.title}</p>
-                        <p className="text-xs text-gray-600">{userBook.subject} - {userBook.condition}</p>
-                      </div>
-                    </label>
-                  ))}
+
+          {book.description && (
+            <div style={{ marginBottom: '20px', padding: '16px', background: '#fdfbf7', border: '1px dashed #2d2d2d', borderRadius: '8px 4px 10px 3px / 4px 10px 3px 8px' }}>
+              <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', lineHeight: 1.6, margin: 0 }}>{book.description}</p>
+            </div>
+          )}
+
+          <div style={{ marginBottom: '20px', padding: '16px', background: '#f0faf4', border: '2px solid #2d2d2d', borderRadius: '8px 4px 10px 3px / 4px 10px 3px 8px', boxShadow: '3px 3px 0px 0px #2d2d2d', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+            <User size={20} strokeWidth={2} color="#2d8a4e" style={{ marginTop: '2px', flexShrink: 0 }} />
+            <div>
+              <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', marginBottom: '4px' }}>Proposé par</p>
+              <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>{book.owner_name}</p>
+              <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: '#555', margin: 0 }}>{book.owner_email}</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '20px' }}>
+            <Check size={18} strokeWidth={2.5} color="#2d8a4e" />
+            <p style={{ fontFamily: 'Kalam, cursive', color: '#2d8a4e', fontSize: '1.2rem', margin: 0 }}>Échange gratuit</p>
+          </div>
+
+          {!book.is_available ? (
+            <div style={{ textAlign: 'center', padding: '24px', background: '#fdfbf7', border: '3px solid #cc3333', borderRadius: '8px 4px 10px 3px / 4px 10px 3px 8px' }}>
+              <p style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', color: '#cc3333', transform: 'rotate(-3deg)', display: 'inline-block' }}>SWAP DONE</p>
+              <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#cc3333', marginTop: '4px' }}>Ce livre n'est plus disponible</p>
+            </div>
+          ) : user && user.id !== book.user_id ? (
+            showSwapForm ? (
+              <div style={{ padding: '20px', background: '#fdfbf7', border: '2px dashed #2d2d2d', borderRadius: '8px 4px 10px 3px / 4px 10px 3px 8px' }}>
+                <h3 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.2rem', marginBottom: '16px' }}>Choisissez vos livres à proposer :</h3>
+                {userBooks.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto', marginBottom: '16px' }}>
+                    {userBooks.map(userBook => (
+                      <label key={userBook.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: selectedBooks.includes(userBook.id) ? '#f0faf4' : '#ffffff', border: `2px solid ${selectedBooks.includes(userBook.id) ? '#2d8a4e' : '#2d2d2d'}`, borderRadius: '6px 3px 8px 3px / 3px 8px 3px 6px', cursor: 'pointer', boxShadow: selectedBooks.includes(userBook.id) ? '2px 2px 0px 0px #2d8a4e' : '2px 2px 0px 0px #2d2d2d' }}>
+                        <input type="checkbox" checked={selectedBooks.includes(userBook.id)} onChange={e => { if (e.target.checked) setSelectedBooks([...selectedBooks, userBook.id]); else setSelectedBooks(selectedBooks.filter(id => id !== userBook.id)); }} style={{ width: '16px', height: '16px' }} />
+                        <div>
+                          <p style={{ fontFamily: 'Patrick Hand, cursive', fontWeight: 700, margin: 0 }}>{userBook.title}</p>
+                          <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#555', margin: 0 }}>{userBook.subject} — {userBook.condition}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555', marginBottom: '16px' }}>Vous n'avez pas encore proposé de livres.</p>
+                )}
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button className="btn-primary" onClick={handleInitiateSwap} disabled={selectedBooks.length === 0} style={{ flex: 1, opacity: selectedBooks.length === 0 ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <ArrowLeftRight size={16} strokeWidth={2.5} /> Proposer l'échange
+                  </button>
+                  <button className="btn-secondary" onClick={() => setShowSwapForm(false)}>Annuler</button>
                 </div>
-              ) : (
-                <p className="text-gray-600 text-sm">Vous n'avez pas encore proposé de livres.</p>
-              )}
-              <div className="flex gap-2 pt-3">
-                <button
-                  onClick={handleInitiateSwap}
-                  disabled={selectedBooks.length === 0}
-                  className={`flex-1 font-bold py-2 rounded-lg transition-all ${selectedBooks.length > 0 ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                >
-                  🔄 Proposer l'échange
-                </button>
-                <button onClick={() => setShowSwapForm(false)} className="px-4 font-semibold text-gray-700 border-2 border-gray-300 rounded-lg hover:bg-gray-50">
-                  Annuler
-                </button>
               </div>
+            ) : (
+              <button className="btn-primary" style={{ width: '100%', fontSize: '1.1rem', padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => { if (userBooks.length === 0) setCurrentPage('offer'); else setShowSwapForm(true); }}>
+                <ArrowLeftRight size={18} strokeWidth={2.5} />
+                {userBooks.length === 0 ? "Proposer un livre d'abord" : "Demander l'échange"}
+              </button>
+            )
+          ) : user && user.id === book.user_id ? (
+            <div style={{ textAlign: 'center', padding: '16px', background: '#e5e0d8', border: '2px dashed #2d2d2d', borderRadius: '8px 4px 10px 3px / 4px 10px 3px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <BookOpen size={18} strokeWidth={2} />
+              <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', margin: 0 }}>C'est votre livre</p>
             </div>
           ) : (
-            <button
-              onClick={() => { if (userBooks.length === 0) setCurrentPage('offer'); else setShowSwapForm(true); }}
-              className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 rounded-lg hover:shadow-lg hover:scale-105 transition-all"
-            >
-              {userBooks.length === 0 ? "Proposer un livre d'abord" : '🔄 Demander l\'échange'}
+            <button className="btn-primary" style={{ width: '100%', fontSize: '1.1rem', padding: '14px' }} onClick={() => window.location.href = '/auth/request-approval'}>
+              Inscrivez-vous pour échanger →
             </button>
-          )
-        ) : user && user.id === book.user_id ? (
-          <div className="bg-gray-100 p-4 rounded-lg text-center text-gray-600">
-            <p className="font-semibold">C'est votre livre</p>
-          </div>
-        ) : (
-          <button onClick={() => window.location.href = '/auth/request-approval'} className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all">
-            Inscrivez-vous pour échanger
-          </button>
-        )}
+          )}
 
-        {swapSuccess && (
-          <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4 rounded-lg font-semibold mt-4">
-            ✓ Demande d'échange envoyée — consultez vos notifications pour les mises à jour.
-          </div>
-        )}
+          {swapSuccess && (
+            <div style={{ marginTop: '16px', padding: '16px', background: '#f0faf4', border: '2px solid #2d8a4e', borderRadius: '8px 4px 10px 3px / 4px 10px 3px 8px', boxShadow: '3px 3px 0px 0px #2d8a4e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Check size={18} strokeWidth={2.5} color="#2d8a4e" />
+              <p style={{ fontFamily: 'Kalam, cursive', color: '#2d8a4e', fontSize: '1.1rem', margin: 0 }}>Demande envoyée ! Consultez vos notifications.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

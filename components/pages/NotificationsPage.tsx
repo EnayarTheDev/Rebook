@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Check, X, BookOpen, Inbox } from 'lucide-react';
 
 interface SwapOffer {
   id: string;
@@ -31,18 +32,8 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
     const loadOffers = async () => {
       const supabase = createClient();
       try {
-        const { data: incomingData } = await supabase
-          .from('swap_offers')
-          .select('*')
-          .eq('book_owner_id', user.id)
-          .order('created_at', { ascending: false });
-
-        const { data: outgoingData } = await supabase
-          .from('swap_offers')
-          .select('*')
-          .eq('requester_id', user.id)
-          .order('created_at', { ascending: false });
-
+        const { data: incomingData } = await supabase.from('swap_offers').select('*').eq('book_owner_id', user.id).order('created_at', { ascending: false });
+        const { data: outgoingData } = await supabase.from('swap_offers').select('*').eq('requester_id', user.id).order('created_at', { ascending: false });
         setIncoming(incomingData || []);
         setOutgoing(outgoingData || []);
       } catch (err) {
@@ -58,36 +49,18 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
     const supabase = createClient();
     try {
       const swapCode = Math.random().toString(36).substr(2, 8).toUpperCase();
-
-      const { error } = await supabase
-        .from('swap_offers')
-        .update({ status: 'accepted', swap_code: swapCode })
-        .eq('id', offerId);
+      const { error } = await supabase.from('swap_offers').update({ status: 'accepted', swap_code: swapCode }).eq('id', offerId);
       if (error) throw error;
-
       const offer = incoming.find(o => o.id === offerId);
       if (offer) {
-        // Mark requested book as unavailable
         await supabase.from('books').update({ is_available: false }).eq('id', offer.book_id);
-
-        // Mark offered books as unavailable
         if (offer.offered_book_ids && offer.offered_book_ids.length > 0) {
           await supabase.from('books').update({ is_available: false }).in('id', offer.offered_book_ids);
         }
-
-        // Decline all other pending offers for the same book
-        await supabase
-          .from('swap_offers')
-          .update({ status: 'declined' })
-          .eq('book_id', offer.book_id)
-          .eq('status', 'pending')
-          .neq('id', offerId);
+        await supabase.from('swap_offers').update({ status: 'declined' }).eq('book_id', offer.book_id).eq('status', 'pending').neq('id', offerId);
       }
-
       setIncoming(incoming.map(o => o.id === offerId ? { ...o, status: 'accepted', swap_code: swapCode } : o));
-    } catch (err) {
-      alert('Erreur : ' + err);
-    }
+    } catch (err) { alert('Erreur : ' + err); }
   };
 
   const handleDecline = async (offerId: string) => {
@@ -96,9 +69,7 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
       const { error } = await supabase.from('swap_offers').update({ status: 'declined' }).eq('id', offerId);
       if (error) throw error;
       setIncoming(incoming.map(o => o.id === offerId ? { ...o, status: 'declined' } : o));
-    } catch (err) {
-      alert('Erreur : ' + err);
-    }
+    } catch (err) { alert('Erreur : ' + err); }
   };
 
   const handleCancel = async (offerId: string) => {
@@ -107,122 +78,139 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
       const { error } = await supabase.from('swap_offers').delete().eq('id', offerId);
       if (error) throw error;
       setOutgoing(outgoing.filter(o => o.id !== offerId));
-    } catch (err) {
-      alert('Erreur : ' + err);
-    }
+    } catch (err) { alert('Erreur : ' + err); }
   };
 
-  if (isLoading) return <div className="text-center py-12">Chargement des notifications...</div>;
+  if (isLoading) return <div style={{ textAlign: 'center', padding: '80px', fontFamily: 'Kalam, cursive', fontSize: '1.5rem' }}>Chargement...</div>;
 
   const pendingIncoming = incoming.filter(o => o.status === 'pending').length;
 
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Notifications</h1>
+  const statusStyle = (status: string) => {
+    if (status === 'pending') return { background: '#f0faf4', color: '#2d2d2d', border: '1px solid #2d2d2d' };
+    if (status === 'accepted') return { background: '#d4edda', color: '#1a6b3a', border: '1px solid #1a6b3a' };
+    return { background: '#e5e0d8', color: '#2d2d2d', border: '1px solid #2d2d2d' };
+  };
 
-      <div className="flex gap-4 border-b border-gray-200 mb-8">
-        <button
-          onClick={() => setActiveTab('incoming')}
-          className={`pb-3 font-semibold transition-colors ${activeTab === 'incoming' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:text-gray-900'}`}
-        >
-          Demandes reçues {pendingIncoming > 0 && <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{pendingIncoming}</span>}
-        </button>
-        <button
-          onClick={() => setActiveTab('outgoing')}
-          className={`pb-3 font-semibold transition-colors ${activeTab === 'outgoing' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:text-gray-900'}`}
-        >
-          Mes demandes ({outgoing.length})
-        </button>
+  const statusLabel = (status: string) => status === 'pending' ? 'En attente' : status === 'accepted' ? 'Acceptée' : 'Refusée';
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+        <Inbox size={32} strokeWidth={2} color="#2d8a4e" />
+        <h1 style={{ fontFamily: 'Kalam, cursive', fontSize: '2.5rem', transform: 'rotate(-1deg)', display: 'inline-block', margin: 0 }}>Notifications</h1>
+      </div>
+
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
+        {[
+          { key: 'incoming', label: `Demandes reçues${pendingIncoming > 0 ? ` (${pendingIncoming})` : ''}` },
+          { key: 'outgoing', label: `Mes demandes (${outgoing.length})` },
+        ].map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', padding: '8px 20px', background: activeTab === tab.key ? '#2d2d2d' : '#ffffff', color: activeTab === tab.key ? '#ffffff' : '#2d2d2d', border: '2px solid #2d2d2d', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', boxShadow: activeTab === tab.key ? '2px 2px 0px 0px #2d8a4e' : '4px 4px 0px 0px #2d2d2d', cursor: 'pointer', transition: 'all 0.1s ease' }}>
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'incoming' && (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {incoming.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-12 text-center">
-              <p className="text-gray-600 text-lg">Aucune demande reçue</p>
+            <div className="card-yellow" style={{ textAlign: 'center', padding: '48px' }}>
+              <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.3rem' }}>Aucune demande reçue</p>
             </div>
-          ) : incoming.map(offer => (
-            <div key={offer.id} className={`rounded-lg p-6 border-2 ${offer.status === 'pending' ? 'bg-blue-50 border-blue-200' : offer.status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="flex justify-between items-start mb-4">
+          ) : incoming.map((offer, i) => (
+            <div key={offer.id} style={{ background: '#ffffff', border: '2px solid #2d2d2d', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px #2d2d2d', padding: '24px', position: 'relative', transform: `rotate(${i % 2 === 0 ? '-0.3deg' : '0.3deg'})` }}>
+              <div className="tack" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', marginTop: '8px' }}>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{offer.requester_name} souhaite échanger</h3>
-                  <p className="text-gray-600">Votre livre : <span className="font-semibold">{offer.requested_book_title}</span></p>
-                  <p className="text-sm text-gray-500 mt-1">{new Date(offer.created_at).toLocaleDateString('fr-FR')}</p>
+                  <h3 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.2rem', marginBottom: '4px' }}>{offer.requester_name} veut échanger</h3>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555' }}>Votre livre : <strong>{offer.requested_book_title}</strong></p>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#888' }}>{new Date(offer.created_at).toLocaleDateString('fr-FR')}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${offer.status === 'pending' ? 'bg-blue-200 text-blue-800' : offer.status === 'accepted' ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-800'}`}>
-                  {offer.status === 'pending' ? 'En attente' : offer.status === 'accepted' ? 'Acceptée' : 'Refusée'}
-                </span>
+                <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', padding: '4px 12px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', ...statusStyle(offer.status) }}>{statusLabel(offer.status)}</span>
               </div>
 
-              <div className="bg-white p-4 rounded-lg mb-4">
-                <p className="text-sm font-semibold text-gray-700 mb-2">Livres proposés en échange :</p>
-                <ul className="space-y-1">
-                  {offer.offered_books?.map((book, idx) => <li key={idx} className="text-gray-700">• {book}</li>)}
-                </ul>
+              <div style={{ padding: '12px', background: '#fdfbf7', border: '1px dashed #2d2d2d', borderRadius: '6px', marginBottom: '16px' }}>
+                <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', fontWeight: 700, marginBottom: '6px' }}>Livres proposés :</p>
+                {offer.offered_books?.map((book, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '2px 0' }}>
+                    <BookOpen size={14} strokeWidth={2} color="#2d8a4e" />
+                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', margin: 0 }}>{book}</p>
+                  </div>
+                ))}
               </div>
 
               {offer.status === 'accepted' && offer.swap_code && (
-                <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-4 rounded">
-                  <p className="text-sm text-gray-700 mb-1">Code d'échange :</p>
-                  <p className="text-2xl font-bold text-green-700">{offer.swap_code}</p>
-                  <p className="text-xs text-gray-600 mt-2">Présentez ce code avec vos livres au bureau d'administration</p>
+                <div style={{ padding: '16px', background: '#f0faf4', border: '2px solid #2d8a4e', borderRadius: '8px', boxShadow: '3px 3px 0px 0px #2d8a4e', marginBottom: '16px', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', marginBottom: '4px' }}>Code d'échange :</p>
+                  <p style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', color: '#2d8a4e', letterSpacing: '4px' }}>{offer.swap_code}</p>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#555' }}>Présentez ce code au bureau d'administration</p>
                 </div>
               )}
 
               {offer.status === 'pending' && (
-                <div className="flex gap-3">
-                  <button onClick={() => handleAccept(offer.id)} className="flex-1 bg-green-500 text-white font-bold py-2 rounded-lg hover:bg-green-600 transition-colors">Accepter</button>
-                  <button onClick={() => handleDecline(offer.id)} className="flex-1 bg-gray-300 text-gray-800 font-bold py-2 rounded-lg hover:bg-gray-400 transition-colors">Refuser</button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button className="btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={() => handleAccept(offer.id)}>
+                    <Check size={16} strokeWidth={2.5} /> Accepter
+                  </button>
+                  <button className="btn-secondary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={() => handleDecline(offer.id)}>
+                    <X size={16} strokeWidth={2.5} /> Refuser
+                  </button>
                 </div>
               )}
-
-              <p className="text-xs text-gray-600 mt-4">Contact : {offer.requester_email}</p>
+              <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#888', marginTop: '12px' }}>Contact : {offer.requester_email}</p>
             </div>
           ))}
         </div>
       )}
 
       {activeTab === 'outgoing' && (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {outgoing.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-12 text-center">
-              <p className="text-gray-600 text-lg">Vous n'avez fait aucune demande d'échange</p>
+            <div className="card-yellow" style={{ textAlign: 'center', padding: '48px' }}>
+              <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.3rem' }}>Aucune demande envoyée</p>
             </div>
-          ) : outgoing.map(offer => (
-            <div key={offer.id} className={`rounded-lg p-6 border-2 ${offer.status === 'pending' ? 'bg-yellow-50 border-yellow-200' : offer.status === 'accepted' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="flex justify-between items-start mb-4">
+          ) : outgoing.map((offer, i) => (
+            <div key={offer.id} style={{ background: '#ffffff', border: '2px solid #2d2d2d', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px #2d2d2d', padding: '24px', position: 'relative', transform: `rotate(${i % 2 === 0 ? '0.3deg' : '-0.3deg'})` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Demande pour : <span className="text-green-700">{offer.requested_book_title}</span></h3>
-                  <p className="text-sm text-gray-500 mt-1">{new Date(offer.created_at).toLocaleDateString('fr-FR')}</p>
+                  <h3 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.2rem', marginBottom: '4px' }}>Demande pour : <span style={{ color: '#2d8a4e' }}>{offer.requested_book_title}</span></h3>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#888' }}>{new Date(offer.created_at).toLocaleDateString('fr-FR')}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${offer.status === 'pending' ? 'bg-yellow-200 text-yellow-800' : offer.status === 'accepted' ? 'bg-green-200 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {offer.status === 'pending' ? 'En attente' : offer.status === 'accepted' ? 'Acceptée' : 'Refusée'}
-                </span>
+                <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', padding: '4px 12px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', ...statusStyle(offer.status) }}>{statusLabel(offer.status)}</span>
               </div>
 
-              <div className="bg-white p-4 rounded-lg mb-4">
-                <p className="text-sm font-semibold text-gray-700 mb-2">Vous avez proposé en échange :</p>
-                <ul className="space-y-1">
-                  {offer.offered_books?.map((book, idx) => <li key={idx} className="text-gray-700">• {book}</li>)}
-                </ul>
+              <div style={{ padding: '12px', background: '#fdfbf7', border: '1px dashed #2d2d2d', borderRadius: '6px', marginBottom: '16px' }}>
+                <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', fontWeight: 700, marginBottom: '6px' }}>Vous avez proposé :</p>
+                {offer.offered_books?.map((book, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '2px 0' }}>
+                    <BookOpen size={14} strokeWidth={2} color="#2d8a4e" />
+                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', margin: 0 }}>{book}</p>
+                  </div>
+                ))}
               </div>
 
               {offer.status === 'accepted' && offer.swap_code && (
-                <div className="bg-green-100 border-l-4 border-green-500 p-4 mb-4 rounded">
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Votre échange a été accepté !</p>
-                  <p className="text-sm text-gray-700 mb-1">Code d'échange :</p>
-                  <p className="text-2xl font-bold text-green-700">{offer.swap_code}</p>
-                  <p className="text-xs text-gray-600 mt-2">Présentez ce code avec vos livres au bureau d'administration</p>
+                <div style={{ padding: '16px', background: '#f0faf4', border: '2px solid #2d8a4e', borderRadius: '8px', boxShadow: '3px 3px 0px 0px #2d8a4e', marginBottom: '16px', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <Check size={18} strokeWidth={2.5} color="#2d8a4e" />
+                    <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.1rem', color: '#2d8a4e', margin: 0 }}>Échange accepté !</p>
+                  </div>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', marginBottom: '4px' }}>Code d'échange :</p>
+                  <p style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', color: '#2d8a4e', letterSpacing: '4px' }}>{offer.swap_code}</p>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#555' }}>Présentez ce code au bureau d'administration</p>
                 </div>
               )}
 
               {offer.status === 'declined' && (
-                <p className="text-sm text-red-600 font-semibold">Votre demande a été refusée.</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <X size={16} strokeWidth={2.5} color="#cc3333" />
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#cc3333', fontWeight: 700, margin: 0 }}>Votre demande a été refusée.</p>
+                </div>
               )}
 
               {offer.status === 'pending' && (
-                <button onClick={() => handleCancel(offer.id)} className="mt-2 text-sm text-red-600 hover:text-red-700 font-semibold underline">
-                  Annuler la demande
+                <button className="btn-danger" onClick={() => handleCancel(offer.id)} style={{ fontSize: '0.9rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <X size={14} strokeWidth={2.5} /> Annuler la demande
                 </button>
               )}
             </div>

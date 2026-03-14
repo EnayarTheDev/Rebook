@@ -1,57 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
+import { UserPlus, Check, AlertCircle } from 'lucide-react';
 
 export default function RequestApprovalPage() {
+  const [formData, setFormData] = useState({ email: '', firstName: '', lastName: '', grade: '' });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
-    if (formData.password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères.');
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas.');
-      return;
-    }
-
     setIsLoading(true);
+    setError('');
     try {
-      const supabase = createClient();
-      const { error: approvalError } = await supabase.from('approval_requests').insert([{
-        email: formData.email,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        password: formData.password,
-        status: 'pending',
-      }]);
-
-      if (approvalError) {
-        if (approvalError.code === '23505') {
-          setError('Une demande avec cet email existe déjà. Si vous avez déjà été approuvé, connectez-vous directement.');
-        } else {
-          setError(approvalError.message || 'Une erreur est survenue. Veuillez réessayer.');
-        }
-        return;
-      }
+      const res = await fetch('/api/auth/request-approval', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: formData.email, firstName: formData.firstName, lastName: formData.lastName, grade: formData.grade }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
       setSuccess(true);
-      setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue. Veuillez réessayer.');
+      setError(err.message || 'Une erreur est survenue');
     } finally {
       setIsLoading(false);
     }
@@ -59,64 +27,78 @@ export default function RequestApprovalPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-green-50 to-blue-50 px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">Demande envoyée !</h1>
-          <p className="text-gray-600 mb-6">Votre demande a été soumise avec succès. Une fois approuvé par un administrateur, vous pourrez vous connecter directement avec votre email et mot de passe.</p>
-          <p className="text-sm text-gray-500 mb-6">Ce processus prend généralement 1 à 2 jours ouvrables.</p>
-          <Link href="/auth/login" className="inline-block bg-gradient-to-r from-green-500 to-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:shadow-lg transition-all">
-            Retour à la connexion
-          </Link>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: '#fdfbf7', backgroundImage: 'radial-gradient(#e5e0d8 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+        <div className="card-yellow" style={{ maxWidth: '480px', width: '100%', textAlign: 'center', padding: '48px', position: 'relative' }}>
+          <div className="tack" />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px', marginTop: '8px' }}>
+            <img
+              src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png"
+              alt="ReBook"
+              style={{ height: '40px', width: 'auto' }}
+            />
+          </div>
+          <div style={{ width: '64px', height: '64px', background: '#d4edda', border: '2px solid #2d8a4e', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '3px 3px 0px 0px #2d8a4e' }}>
+            <Check size={32} strokeWidth={2.5} color="#2d8a4e" />
+          </div>
+          <h2 style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', marginBottom: '12px' }}>Demande envoyée !</h2>
+          <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1.1rem', color: '#555', marginBottom: '24px' }}>Un administrateur va examiner votre demande. Vous recevrez un accès bientôt !</p>
+          <a href="/auth/login" style={{ fontFamily: 'Patrick Hand, cursive', color: '#2d8a4e', textDecoration: 'underline wavy #2d8a4e 2px' }}>← Retour à la connexion</a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-green-50 to-blue-50 px-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Rejoindre Re:Book</h1>
-        <p className="text-gray-600 mb-6">Demandez l'accès pour échanger des livres avec d'autres lecteurs</p>
-
-        {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Prénom *</label>
-              <input type="text" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500" placeholder="Jean" />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: '#fdfbf7', backgroundImage: 'radial-gradient(#e5e0d8 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+      <div style={{ width: '100%', maxWidth: '480px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+          <img
+            src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png"
+            alt="ReBook"
+            style={{ height: '48px', width: 'auto' }}
+          />
+        </div>
+        <div className="card" style={{ position: 'relative' }}>
+          <div className="tape" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', marginTop: '8px' }}>
+            <UserPlus size={24} strokeWidth={2} color="#2d8a4e" />
+            <h2 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.8rem', margin: 0 }}>Demander l'accès</h2>
+          </div>
+          <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555', marginBottom: '24px' }}>Remplissez ce formulaire et un admin vous approuvera bientôt !</p>
+          {error && (
+            <div style={{ marginBottom: '20px', padding: '12px 16px', background: '#fde8e8', border: '2px solid #cc3333', borderRadius: '6px 3px 8px 3px / 3px 8px 3px 6px', boxShadow: '2px 2px 0px 0px #cc3333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={16} strokeWidth={2.5} color="#cc3333" />
+              <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#cc3333', margin: 0 }}>{error}</p>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Prénom *</label>
+                <input type="text" required value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="input-wobbly" placeholder="Prénom" />
+              </div>
+              <div>
+                <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Nom *</label>
+                <input type="text" required value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="input-wobbly" placeholder="Nom" />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nom *</label>
-              <input type="text" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500" placeholder="Dupont" />
+              <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Email *</label>
+              <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="input-wobbly" placeholder="ton@email.com" />
             </div>
+            <div>
+              <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Classe *</label>
+              <input type="text" required value={formData.grade} onChange={e => setFormData({ ...formData, grade: e.target.value })} className="input-wobbly" placeholder="ex: Terminale B" />
+            </div>
+            <button type="submit" disabled={isLoading} className="btn-primary" style={{ fontSize: '1.1rem', padding: '12px', marginTop: '8px', opacity: isLoading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <UserPlus size={18} strokeWidth={2.5} />
+              {isLoading ? 'Envoi...' : 'Envoyer la demande'}
+            </button>
+          </form>
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed #2d2d2d', textAlign: 'center' }}>
+            <a href="/auth/login" style={{ fontFamily: 'Patrick Hand, cursive', color: '#2d8a4e', textDecoration: 'underline wavy #2d8a4e 2px' }}>← Déjà un compte ? Se connecter</a>
           </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
-            <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500" placeholder="vous@email.com" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Mot de passe *</label>
-            <input type="password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500" placeholder="Au moins 6 caractères" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Confirmer le mot de passe *</label>
-            <input type="password" required value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500" placeholder="Répétez votre mot de passe" />
-          </div>
-
-          <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 rounded-lg hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-            {isLoading ? 'Envoi en cours...' : 'Demander l\'accès'}
-          </button>
-        </form>
-
-        <p className="text-center text-gray-600 mt-6">
-          Déjà approuvé ?{' '}
-          <Link href="/auth/login" className="text-green-600 hover:underline font-semibold">Se connecter</Link>
-        </p>
+        </div>
       </div>
     </div>
   );
