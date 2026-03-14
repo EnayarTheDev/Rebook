@@ -113,7 +113,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
         <div onClick={() => { setCurrentPage('home'); router.push('/'); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png" alt="ReBook" style={{ height: '24px', width: 'auto' }} />
           <Handshake size={14} strokeWidth={2} color="#2d8a4e" />
-          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png" alt="Al Hanane 2" style={{ height: '40px', width: 'auto' }} />
+          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png" alt="Al Hanane 2" style={{ height: '36px', width: 'auto' }} />
         </div>
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
