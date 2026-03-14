@@ -5,11 +5,11 @@
   --bg: #fdfbf7;
   --fg: #2d2d2d;
   --muted: #e5e0d8;
-  --accent: #ff4d4d;
+  --accent: #2d8a4e;
+  --accent-dark: #1a6b3a;
   --border: #2d2d2d;
-  --blue: #2d5da1;
   --white: #ffffff;
-  --yellow: #fff9c4;
+  --yellow: #f0faf4;
 }
 
 * {
@@ -48,11 +48,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .hard-shadow-lg {
   box-shadow: 8px 8px 0px 0px var(--fg);
-}
-
-.hard-shadow-hover:hover {
-  box-shadow: 2px 2px 0px 0px var(--fg);
-  transform: translate(2px, 2px);
 }
 
 .btn-primary {
@@ -94,7 +89,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-secondary:hover {
-  background: var(--blue);
+  background: var(--accent-dark);
   color: white;
   box-shadow: 2px 2px 0px 0px var(--fg);
   transform: translate(2px, 2px);
@@ -103,9 +98,9 @@ h1, h2, h3, h4, h5, h6 {
 .btn-danger {
   font-family: 'Patrick Hand', cursive;
   background: var(--white);
-  color: var(--accent);
-  border: 3px solid var(--accent);
-  box-shadow: 4px 4px 0px 0px var(--accent);
+  color: #cc3333;
+  border: 3px solid #cc3333;
+  box-shadow: 4px 4px 0px 0px #cc3333;
   transition: all 0.1s ease;
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   padding: 10px 24px;
@@ -114,9 +109,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-danger:hover {
-  background: var(--accent);
+  background: #cc3333;
   color: white;
-  box-shadow: 2px 2px 0px 0px var(--accent);
+  box-shadow: 2px 2px 0px 0px #cc3333;
   transform: translate(2px, 2px);
 }
 
@@ -150,8 +145,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .input-wobbly:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(45, 93, 161, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(45, 138, 78, 0.15);
 }
 
 .tape {
@@ -184,4 +179,43 @@ h1, h2, h3, h4, h5, h6 {
 
 .bounce-gentle {
   animation: bounce-gentle 3s ease-in-out infinite;
+}
+
+/* ── Responsive ── */
+@media (min-width: 768px) {
+  .desktop-nav { display: block !important; }
+  .mobile-nav { display: none !important; }
+  .mobile-bottom-bar { display: none !important; }
+}
+
+@media (max-width: 767px) {
+  .desktop-nav { display: none !important; }
+  .mobile-nav { display: flex !important; }
+  .mobile-bottom-bar { display: flex !important; }
+
+  main {
+    padding-bottom: 90px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  h1 { font-size: 2rem !important; }
+  h2 { font-size: 1.5rem !important; }
+
+  .btn-primary, .btn-secondary, .btn-danger {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card, .card-yellow {
+    padding: 1rem !important;
+  }
+
+  .browse-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

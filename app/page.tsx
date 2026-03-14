@@ -39,10 +39,8 @@ export default function Home() {
       setIsLoading(false);
     };
 
-    // Initial check
     supabase.auth.getUser().then(({ data: { user } }) => loadUser(user));
 
-    // Listen for login/logout changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       loadUser(session?.user ?? null);
     });
@@ -57,31 +55,31 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-blue-50">
-        <div className="text-gray-600 text-lg">Loading...</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#fdfbf7' }}>
+        <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.5rem', color: '#2d2d2d' }}>Chargement...</p>
       </div>
     );
   }
 
-  // Show landing page to unauthenticated users
   if (!user) {
     return (
       <>
         <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} user={user} userRole={null} />
-        <main className="container mx-auto px-4 py-12">
+        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px', paddingBottom: '90px' }}>
           {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} />}
           {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
           {currentPage === 'details' && selectedBookId && (
             <DetailsPage bookId={selectedBookId} setCurrentPage={setCurrentPage} user={user} />
           )}
           {currentPage !== 'home' && currentPage !== 'browse' && currentPage !== 'details' && (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Sign up to continue</h2>
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <h2 style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', marginBottom: '16px' }}>Connectez-vous pour continuer</h2>
               <button
                 onClick={() => router.push('/auth/request-approval')}
-                className="bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 px-8 rounded-lg hover:shadow-lg transition-all"
+                className="btn-primary"
+                style={{ fontSize: '1.1rem', padding: '12px 32px' }}
               >
-                Request Access
+                Demander l'accès
               </button>
             </div>
           )}
@@ -90,11 +88,10 @@ export default function Home() {
     );
   }
 
-  // Authenticated user view
   return (
     <>
       <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} user={user} userRole={userRole} />
-      <main className="container mx-auto px-4 py-12">
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px', paddingBottom: '90px' }}>
         {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} />}
         {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
         {currentPage === 'offer' && <OfferBooksPage setCurrentPage={setCurrentPage} user={user} />}
