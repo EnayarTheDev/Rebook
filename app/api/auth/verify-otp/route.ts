@@ -8,23 +8,18 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from('email_otps')
-      .select('*')
-      .eq('email', email)
-      .eq('otp', token)
-      .single();
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'magiclink',
+    });
 
-    if (error || !data) {
+    if (error) {
       return NextResponse.json({ message: 'Code invalide ou expiré' }, { status: 400 });
     }
 
-    if (new Date(data.expires_at) < new Date()) {
-      return NextResponse.json({ message: 'Code expiré, veuillez en demander un nouveau' }, { status: 400 });
-    }
-
-    // Delete OTP after successful verification
-    await supabase.from('email_otps').delete().eq('email', email);
+    // Sign out immediately — we only used this to verify the email, not to log them in
+    await supabase.auth.signOut();
 
     return NextResponse.json({ success: true });
   } catch (error) {

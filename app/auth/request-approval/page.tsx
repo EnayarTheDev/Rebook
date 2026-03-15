@@ -84,7 +84,6 @@ export default function RequestApprovalPage() {
     </div>
   );
 
-  // --- Success ---
   if (step === 'success') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -102,7 +101,7 @@ export default function RequestApprovalPage() {
               Votre email a été vérifié.
             </p>
             <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', color: '#777', marginBottom: '28px' }}>
-                Un administrateur va examiner votre demande. Vous recevrez un email dès que c'est approuvé !
+              Un administrateur va examiner votre demande. Vous recevrez un email dès que c'est approuvé !
             </p>
             <a href="/auth/login" style={{ fontFamily: 'Patrick Hand, cursive', color: '#2d8a4e', textDecoration: 'underline wavy #2d8a4e 2px' }}>← Retour à la connexion</a>
           </div>
@@ -111,7 +110,6 @@ export default function RequestApprovalPage() {
     );
   }
 
-  // --- OTP verification ---
   if (step === 'verify') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -126,7 +124,7 @@ export default function RequestApprovalPage() {
               <h2 style={{ fontSize: '1.8rem', margin: 0 }}>Vérifiez votre email</h2>
             </div>
             <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555', marginBottom: '24px' }}>
-              Un code à 6 chiffres a été envoyé à <strong>{formData.email}</strong>. Entrez-le ci-dessous pour confirmer.
+              Un code a été envoyé à <strong>{formData.email}</strong>. Entrez-le ci-dessous pour confirmer.
             </p>
             {errorBox}
             <form onSubmit={handleVerifyAndSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -135,20 +133,19 @@ export default function RequestApprovalPage() {
                 <input
                   type="text"
                   required
-                  maxLength={6}
                   value={otp}
                   onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
                   className="input-wobbly"
-                  placeholder="123456"
+                  placeholder="········"
                   style={{ fontSize: '1.5rem', letterSpacing: '0.3em', textAlign: 'center' }}
                   autoFocus
                 />
               </div>
               <button
                 type="submit"
-                disabled={isLoading || otp.length < 6}
+                disabled={isLoading}
                 className="btn-primary"
-                style={{ fontSize: '1.1rem', padding: '12px', marginTop: '8px', opacity: (isLoading || otp.length < 6) ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                style={{ fontSize: '1.1rem', padding: '12px', marginTop: '8px', opacity: isLoading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
                 <ShieldCheck size={18} strokeWidth={2.5} />
                 {isLoading ? 'Vérification...' : 'Confirmer et envoyer la demande'}
@@ -168,7 +165,6 @@ export default function RequestApprovalPage() {
     );
   }
 
-  // --- Main form ---
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
       <div style={{ width: '100%', maxWidth: '480px' }}>
