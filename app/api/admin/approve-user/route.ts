@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { sendApprovalAccepted } from '@/lib/emails';
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,18 +55,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Manually insert the profile row — the trigger doesn't fire when using the admin API
-    // Get the user id either from the newly created user or look it up
     let userId = createdUser?.user?.id;
 
     if (!userId) {
-      // User already existed, look up their id
       const { data: { users } } = await adminSupabase.auth.admin.listUsers();
       const existingUser = users.find((u: any) => u.email === approval.email);
       userId = existingUser?.id;
     }
 
     if (userId) {
-      // Insert profile row if it doesn't already exist
       await adminSupabase
         .from('profiles')
         .upsert({
@@ -83,6 +81,14 @@ export async function POST(request: NextRequest) {
       .from('approval_requests')
       .update({ status: 'approved' })
       .eq('id', approvalId);
+
+    // Send approval email notification
+    try {
+      await sendApprovalAccepted(approval.email, approval.first_name);
+    } catch (emailError) {
+      // Don't fail the whole request if email fails
+      console.error('Failed to send approval email:', emailError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
