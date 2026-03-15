@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, firstName, lastName, grade } = await request.json();
+    const { email, firstName, lastName, grade, password } = await request.json();
 
-    if (!email || !firstName || !lastName || !grade) {
+    if (!email || !firstName || !lastName || !grade || !password) {
       return NextResponse.json(
         { message: 'All fields are required' },
         { status: 400 }
@@ -28,10 +28,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create approval request
+    // Create approval request with password
     const { data, error } = await supabase
       .from('approval_requests')
-      .insert({ email, first_name: firstName, last_name: lastName, grade, status: 'pending' })
+      .insert({ email, first_name: firstName, last_name: lastName, grade, password, status: 'pending' })
       .select()
       .single();
 

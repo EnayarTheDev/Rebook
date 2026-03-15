@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
-import { Bell, Settings, LogOut, ChevronDown, Handshake, Home, BookOpen, PenLine, Inbox } from 'lucide-react';
+import { Bell, Settings, LogOut, ChevronDown, Handshake, Home, BookOpen, PenLine, Inbox, User } from 'lucide-react';
 
 interface NavigationProps {
   currentPage: string;
@@ -27,6 +27,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
     { key: 'browse', label: 'Parcourir', icon: <BookOpen size={22} strokeWidth={2.5} /> },
     { key: 'offer', label: 'Proposer', icon: <PenLine size={22} strokeWidth={2.5} /> },
     { key: 'notifications', label: 'Notifs', icon: <Bell size={22} strokeWidth={2.5} /> },
+    { key: 'profile', label: 'Profil', icon: <User size={22} strokeWidth={2.5} /> },
     ...(userRole === 'admin' || userRole === 'owner' ? [{ key: 'admin', label: 'Admin', icon: <Settings size={22} strokeWidth={2.5} /> }] : []),
   ];
 
@@ -40,7 +41,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
           <div onClick={() => { setCurrentPage('home'); router.push('/'); }} style={{ cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '10px', marginRight: '24px' }}>
             <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png" alt="ReBook" style={{ height: '32px', width: 'auto', display: 'block' }} />
             <Handshake size={20} strokeWidth={2} color="#2d8a4e" />
-            <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png" alt="Al Hanane 2" style={{ height: '50px', width: 'auto', display: 'block' }} />
+            <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/logo-H2-FOND-TRANSPARENT-e1452018760393.png" alt="Al Hanane 2" style={{ height: '44px', width: 'auto', display: 'block' }} />
           </div>
 
           {/* Center links */}
@@ -90,6 +91,9 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
                   <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', background: '#fdfbf7', border: '2px solid #2d2d2d', borderRadius: '4px', boxShadow: '4px 4px 0px 0px #2d2d2d', padding: '8px', minWidth: '180px', zIndex: 50 }}>
                     <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#888', padding: '4px 8px', borderBottom: '1px dashed #2d2d2d', marginBottom: '4px' }}>{user.email}</p>
                     {userRole && <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#2d2d2d', padding: '4px 8px', borderBottom: '1px dashed #2d2d2d', marginBottom: '4px' }}>Rôle: <strong>{userRole}</strong></p>}
+                    <button onClick={() => { setCurrentPage('profile'); setShowDropdown(false); }} style={{ fontFamily: 'Patrick Hand, cursive', background: 'none', border: 'none', color: '#2d2d2d', cursor: 'pointer', padding: '4px 8px', width: '100%', textAlign: 'left', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <User size={14} strokeWidth={2.5} /> Mon profil
+                    </button>
                     <button onClick={handleLogout} style={{ fontFamily: 'Patrick Hand, cursive', background: 'none', border: 'none', color: '#cc3333', cursor: 'pointer', padding: '4px 8px', width: '100%', textAlign: 'left', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <LogOut size={14} strokeWidth={2.5} /> Déconnexion
                     </button>
@@ -111,9 +115,9 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
       {/* ── Mobile Top Bar ── */}
       <div className="mobile-nav" style={{ background: '#fdfbf7', borderBottom: '2px solid #2d2d2d', position: 'sticky', top: 0, zIndex: 50, padding: '12px 16px', alignItems: 'center', justifyContent: 'space-between' }}>
         <div onClick={() => { setCurrentPage('home'); router.push('/'); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png" alt="ReBook" style={{ height: '24px', width: 'auto' }} />
+          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png" alt="ReBook" style={{ height: '28px', width: 'auto' }} />
           <Handshake size={14} strokeWidth={2} color="#2d8a4e" />
-          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png" alt="Al Hanane 2" style={{ height: '36px', width: 'auto' }} />
+          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/logo-H2-FOND-TRANSPARENT-e1452018760393.png" alt="Al Hanane 2" style={{ height: '32px', width: 'auto' }} />
         </div>
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

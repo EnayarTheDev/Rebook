@@ -10,6 +10,7 @@ import OfferBooksPage from '@/components/pages/OfferBooksPage';
 import DetailsPage from '@/components/pages/DetailsPage';
 import NotificationsPage from '@/components/pages/NotificationsPage';
 import AdminDashboard from '@/components/pages/AdminDashboard';
+import ProfilePage from '@/components/pages/ProfilePage';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -30,11 +31,7 @@ export default function Home() {
         return;
       }
       setUser(sessionUser);
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', sessionUser.id)
-        .single();
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', sessionUser.id).single();
       setUserRole(profile?.role || 'user');
       setIsLoading(false);
     };
@@ -74,11 +71,7 @@ export default function Home() {
           {currentPage !== 'home' && currentPage !== 'browse' && currentPage !== 'details' && (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <h2 style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', marginBottom: '16px' }}>Connectez-vous pour continuer</h2>
-              <button
-                onClick={() => router.push('/auth/request-approval')}
-                className="btn-primary"
-                style={{ fontSize: '1.1rem', padding: '12px 32px' }}
-              >
+              <button onClick={() => router.push('/auth/request-approval')} className="btn-primary" style={{ fontSize: '1.1rem', padding: '12px 32px' }}>
                 Demander l'accès
               </button>
             </div>
@@ -96,6 +89,7 @@ export default function Home() {
         {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
         {currentPage === 'offer' && <OfferBooksPage setCurrentPage={setCurrentPage} user={user} />}
         {currentPage === 'notifications' && <NotificationsPage user={user} />}
+        {currentPage === 'profile' && <ProfilePage user={user} setCurrentPage={setCurrentPage} />}
         {currentPage === 'admin' && (userRole === 'admin' || userRole === 'owner') && <AdminDashboard userRole={userRole} user={user} />}
         {currentPage === 'details' && selectedBookId && (
           <DetailsPage bookId={selectedBookId} setCurrentPage={setCurrentPage} user={user} />
