@@ -35,6 +35,8 @@ export default function RequestApprovalPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
+      // Save formData to sessionStorage in case of page reload
+      sessionStorage.setItem('rebook_pending_form', JSON.stringify(formData));
       setStep('verify');
     } catch (err: any) {
       setError(err.message || "Erreur lors de l'envoi du code");
@@ -47,11 +49,19 @@ export default function RequestApprovalPage() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+
+    // Recover formData from sessionStorage if state was lost
+    let currentFormData = formData;
+    const saved = sessionStorage.getItem('rebook_pending_form');
+    if (saved) {
+      currentFormData = JSON.parse(saved);
+    }
+
     try {
       const verifyRes = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, token: otp }),
+        body: JSON.stringify({ email: currentFormData.email, token: otp }),
       });
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok) throw new Error(verifyData.message);
@@ -60,15 +70,16 @@ export default function RequestApprovalPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          grade: formData.grade,
-          password: formData.password,
+          email: currentFormData.email,
+          firstName: currentFormData.firstName,
+          lastName: currentFormData.lastName,
+          grade: currentFormData.grade,
+          password: currentFormData.password,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
+      sessionStorage.removeItem('rebook_pending_form');
       setStep('success');
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue');
@@ -124,7 +135,7 @@ export default function RequestApprovalPage() {
               <h2 style={{ fontSize: '1.8rem', margin: 0 }}>Vérifiez votre email</h2>
             </div>
             <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555', marginBottom: '24px' }}>
-              Un code a été envoyé à <strong>{formData.email}</strong>. Entrez-le ci-dessous pour confirmer.
+              Un code a été envoyé à <strong>{formData.email || JSON.parse(sessionStorage.getItem('rebook_pending_form') || '{}').email}</strong>. Entrez-le ci-dessous pour confirmer.
             </p>
             {errorBox}
             <form onSubmit={handleVerifyAndSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -153,7 +164,7 @@ export default function RequestApprovalPage() {
             </form>
             <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed #2d2d2d', textAlign: 'center' }}>
               <button
-                onClick={() => { setStep('form'); setError(''); setOtp(''); }}
+                onClick={() => { setStep('form'); setError(''); setOtp(''); sessionStorage.removeItem('rebook_pending_form'); }}
                 style={{ fontFamily: 'Patrick Hand, cursive', color: '#2d8a4e', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline wavy #2d8a4e 2px' }}
               >
                 ← Modifier mes informations
