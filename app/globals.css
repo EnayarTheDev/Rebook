@@ -181,6 +181,14 @@ h1, h2, h3, h4, h5, h6 {
   animation: bounce-gentle 3s ease-in-out infinite;
 }
 
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 /* ── Responsive ── */
 @media (min-width: 768px) {
   .desktop-nav { display: block !important; }

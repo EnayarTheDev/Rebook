@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { BookOpen, Check, X } from 'lucide-react';
+import { BookOpen, Check, X, Search } from 'lucide-react';
 
 interface Book {
   id: string;
@@ -26,6 +26,7 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({ genre: '', condition: '' });
+  const [search, setSearch] = useState('');
 
   const genres = ['Roman', 'Poésie', 'Théâtre', 'Comédie', 'Drame', 'Science-Fiction', 'Fantastique', 'Policier', 'Biographie', 'Histoire', 'Philosophie', 'Autre'];
   const conditions = [
@@ -60,8 +61,25 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
     finally { setIsLoading(false); }
   };
 
+  const filteredBooks = books.filter(b =>
+    b.title.toLowerCase().includes(search.toLowerCase()) ||
+    b.owner_name.toLowerCase().includes(search.toLowerCase()) ||
+    b.genre.toLowerCase().includes(search.toLowerCase())
+  );
+
   const conditionLabel: Record<string, string> = { excellent: 'Excellent', good: 'Bon', fair: 'Correct' };
   const rotations = ['-1deg', '0.5deg', '-0.5deg', '1deg', '-1.5deg', '0.8deg'];
+
+  const SkeletonCard = () => (
+    <div style={{ background: '#ffffff', border: '2px solid #e5e0d8', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', overflow: 'hidden', boxShadow: '4px 4px 0px 0px #e5e0d8' }}>
+      <div style={{ height: '160px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' }} />
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ height: '20px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '4px', width: '80%' }} />
+        <div style={{ height: '16px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '4px', width: '50%' }} />
+        <div style={{ height: '16px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '4px', width: '60%' }} />
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px' }}>
@@ -72,32 +90,52 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
         Trouvez votre prochain livre à échanger !
       </p>
 
-      <div className="card" style={{ marginBottom: '32px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <div style={{ flex: 1, minWidth: '200px' }}>
-          <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Genre</label>
-          <select value={filters.genre} onChange={e => setFilters({ ...filters, genre: e.target.value })} className="input-wobbly">
-            <option value="">Tous les genres</option>
-            {genres.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
+      <div className="card" style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Search */}
+        <div style={{ position: 'relative' }}>
+          <Search size={18} strokeWidth={2} color="#888" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Rechercher par titre, auteur, genre..."
+            className="input-wobbly"
+            style={{ paddingLeft: '44px' }}
+          />
         </div>
-        <div style={{ flex: 1, minWidth: '200px' }}>
-          <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>État</label>
-          <select value={filters.condition} onChange={e => setFilters({ ...filters, condition: e.target.value })} className="input-wobbly">
-            <option value="">Tous les états</option>
-            {conditions.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </select>
+
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Genre</label>
+            <select value={filters.genre} onChange={e => setFilters({ ...filters, genre: e.target.value })} className="input-wobbly">
+              <option value="">Tous les genres</option>
+              {genres.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>État</label>
+            <select value={filters.condition} onChange={e => setFilters({ ...filters, condition: e.target.value })} className="input-wobbly">
+              <option value="">Tous les états</option>
+              {conditions.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
         </div>
       </div>
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '60px', fontFamily: 'Kalam, cursive', fontSize: '1.5rem' }}>Chargement des livres...</div>
-      ) : books.length === 0 ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '28px' }} className="browse-grid">
+          {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCard key={i} />)}
+        </div>
+      ) : filteredBooks.length === 0 ? (
         <div className="card-yellow" style={{ textAlign: 'center', padding: '60px' }}>
-          <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.5rem' }}>Aucun livre trouvé</p>
+          <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.5rem' }}>
+            {search ? `Aucun résultat pour "${search}"` : 'Aucun livre trouvé'}
+          </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '28px' }}>
-          {books.map((book, i) => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '28px' }} className="browse-grid">
+          {filteredBooks.map((book, i) => (
             <div
               key={book.id}
               onClick={() => book.is_available && onSelectBook(book.id)}

@@ -81,7 +81,18 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
     } catch (err) { alert('Erreur : ' + err); }
   };
 
-  if (isLoading) return <div style={{ textAlign: 'center', padding: '80px', fontFamily: 'Kalam, cursive', fontSize: '1.5rem' }}>Chargement...</div>;
+  if (isLoading) return (
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
+      <div style={{ height: '48px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '8px', width: '200px', marginBottom: '32px' }} />
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{ background: '#ffffff', border: '2px solid #e5e0d8', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px #e5e0d8', padding: '24px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ height: '20px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '4px', width: '60%' }} />
+          <div style={{ height: '16px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '4px', width: '40%' }} />
+          <div style={{ height: '16px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '4px', width: '80%' }} />
+        </div>
+      ))}
+    </div>
+  );
 
   const pendingIncoming = incoming.filter(o => o.status === 'pending').length;
 
@@ -120,7 +131,7 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
           ) : incoming.map((offer, i) => (
             <div key={offer.id} style={{ background: '#ffffff', border: '2px solid #2d2d2d', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px #2d2d2d', padding: '24px', position: 'relative', transform: `rotate(${i % 2 === 0 ? '-0.3deg' : '0.3deg'})` }}>
               <div className="tack" />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', marginTop: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', marginTop: '8px', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
                   <h3 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.2rem', marginBottom: '4px' }}>{offer.requester_name} veut échanger</h3>
                   <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555' }}>Votre livre : <strong>{offer.requested_book_title}</strong></p>
@@ -171,7 +182,7 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
             </div>
           ) : outgoing.map((offer, i) => (
             <div key={offer.id} style={{ background: '#ffffff', border: '2px solid #2d2d2d', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px #2d2d2d', padding: '24px', position: 'relative', transform: `rotate(${i % 2 === 0 ? '0.3deg' : '-0.3deg'})` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
                   <h3 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.2rem', marginBottom: '4px' }}>Demande pour : <span style={{ color: '#2d8a4e' }}>{offer.requested_book_title}</span></h3>
                   <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#888' }}>{new Date(offer.created_at).toLocaleDateString('fr-FR')}</p>
