@@ -3,28 +3,24 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, token } = await request.json();
-    if (!email || !token) return NextResponse.json({ message: 'Champs manquants' }, { status: 400 });
+    const { email } = await request.json();
+    if (!email) return NextResponse.json({ message: 'Email requis' }, { status: 400 });
 
     const supabase = await createClient();
 
-    const { error } = await supabase.auth.verifyOtp({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      token,
-      type: 'email',
+      options: { shouldCreateUser: true },
     });
 
     if (error) {
-      console.error('Verify OTP error details:', error);
-      return NextResponse.json({ message: 'Code invalide ou expiré' }, { status: 400 });
+      console.error('OTP error:', error);
+      return NextResponse.json({ message: "Erreur lors de l'envoi du code" }, { status: 500 });
     }
-
-    // Sign out immediately — we only used this to verify the email, not to log them in
-    await supabase.auth.signOut();
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Verify OTP error:', error);
+    console.error('Send OTP error:', error);
     return NextResponse.json({ message: 'Une erreur est survenue' }, { status: 500 });
   }
 }
