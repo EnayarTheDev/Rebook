@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
+      console.error('Verify OTP error details:', error);
       return NextResponse.json({ message: 'Code invalide ou expiré' }, { status: 400 });
     }
 
