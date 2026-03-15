@@ -59,11 +59,8 @@ export default function RequestApprovalPage() {
               <Check size={32} strokeWidth={2.5} color="#2d8a4e" />
             </div>
             <h2 style={{ fontSize: '2rem', marginBottom: '12px' }}>Demande envoyée !</h2>
-            <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1.1rem', color: '#555', marginBottom: '8px' }}>
+            <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1.1rem', color: '#555', marginBottom: '28px' }}>
               Un administrateur va examiner votre demande.
-            </p>
-            <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', color: '#777', marginBottom: '28px' }}>
-              Vous serez contacté dès que votre accès est approuvé !
             </p>
             <a href="/auth/login" style={{ fontFamily: 'Patrick Hand, cursive', color: '#2d8a4e', textDecoration: 'underline wavy #2d8a4e 2px' }}>← Retour à la connexion</a>
           </div>

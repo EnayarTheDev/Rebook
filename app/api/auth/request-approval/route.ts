@@ -3,34 +3,48 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    console.log('verify-otp received body:', JSON.stringify(body));
+    const { email, firstName, lastName, grade, password } = await request.json();
 
-    const { email, token } = body;
-    if (!email || !token) {
-      console.log('Missing fields - email:', email, 'token:', token);
-      return NextResponse.json({ message: 'Champs manquants' }, { status: 400 });
+    if (!email || !firstName || !lastName || !grade || !password) {
+      return NextResponse.json(
+        { message: 'All fields are required' },
+        { status: 400 }
+      );
     }
 
     const supabase = await createClient();
 
-    const types = ['email', 'magiclink', 'signup', 'recovery'] as const;
-    let lastError = null;
+    const { data: existing } = await supabase
+      .from('approval_requests')
+      .select('*')
+      .eq('email', email)
+      .single();
 
-    for (const type of types) {
-      const { error } = await supabase.auth.verifyOtp({ email, token, type });
-      if (!error) {
-        await supabase.auth.signOut();
-        return NextResponse.json({ success: true });
-      }
-      lastError = error;
-      console.log(`Type ${type} failed:`, error.message);
+    if (existing) {
+      return NextResponse.json(
+        { message: `Your request is already ${existing.status}. Please wait for admin approval.` },
+        { status: 400 }
+      );
     }
 
-    console.error('All OTP types failed:', lastError);
-    return NextResponse.json({ message: 'Code invalide ou expiré' }, { status: 400 });
+    const { data, error } = await supabase
+      .from('approval_requests')
+      .insert({ email, first_name: firstName, last_name: lastName, grade, password, status: 'pending' })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({
+      success: true,
+      message: 'Approval request submitted. Please wait for admin review.',
+      request: data,
+    });
   } catch (error) {
-    console.error('Verify OTP error:', error);
-    return NextResponse.json({ message: 'Une erreur est survenue' }, { status: 500 });
+    console.error('[v0] Approval request error:', error);
+    return NextResponse.json(
+      { message: 'An error occurred during approval request' },
+      { status: 500 }
+    );
   }
 }
