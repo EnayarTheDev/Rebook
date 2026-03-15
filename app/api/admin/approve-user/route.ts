@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
-import { sendApprovalAccepted } from '@/lib/emails';
 
 export async function POST(request: NextRequest) {
   try {
     const { approvalId } = await request.json();
 
-    // Verify the requester is an admin/owner
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -22,7 +20,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get the approval request
     const { data: approval, error: fetchError } = await supabase
       .from('approval_requests')
       .select('*')
@@ -33,7 +30,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Approval request not found' }, { status: 404 });
     }
 
-    // Use service role key to create the user in Supabase Auth
     const adminSupabase = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -54,7 +50,6 @@ export async function POST(request: NextRequest) {
       throw createError;
     }
 
-    // Manually insert the profile row — the trigger doesn't fire when using the admin API
     let userId = createdUser?.user?.id;
 
     if (!userId) {
@@ -76,19 +71,10 @@ export async function POST(request: NextRequest) {
         }, { onConflict: 'id' });
     }
 
-    // Mark as approved
     await supabase
       .from('approval_requests')
       .update({ status: 'approved' })
       .eq('id', approvalId);
-
-    // Send approval email notification
-    try {
-      await sendApprovalAccepted(approval.email, approval.first_name);
-    } catch (emailError) {
-      // Don't fail the whole request if email fails
-      console.error('Failed to send approval email:', emailError);
-    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { sendApprovalRejected } from '@/lib/emails';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,13 +31,6 @@ export async function POST(request: NextRequest) {
       .from('approval_requests')
       .update({ status: 'rejected' })
       .eq('id', approvalId);
-
-    // Send rejection email notification
-    try {
-      await sendApprovalRejected(approval.email, approval.first_name);
-    } catch (emailError) {
-      console.error('Failed to send rejection email:', emailError);
-    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
