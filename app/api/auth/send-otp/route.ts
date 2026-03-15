@@ -3,28 +3,24 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, token } = await request.json();
-    if (!email || !token) return NextResponse.json({ message: 'Champs manquants' }, { status: 400 });
+    const { email } = await request.json();
+    if (!email) return NextResponse.json({ message: 'Email requis' }, { status: 400 });
 
     const supabase = await createClient();
 
-    const types = ['email', 'magiclink', 'signup', 'recovery'] as const;
-    let lastError = null;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
 
-    for (const type of types) {
-      const { error } = await supabase.auth.verifyOtp({ email, token, type });
-      if (!error) {
-        await supabase.auth.signOut();
-        return NextResponse.json({ success: true });
-      }
-      lastError = error;
-      console.log(`Type ${type} failed:`, error.message);
+    if (error) {
+      console.error('OTP error:', error);
+      return NextResponse.json({ message: "Erreur lors de l'envoi du code" }, { status: 500 });
     }
 
-    console.error('All OTP types failed:', lastError);
-    return NextResponse.json({ message: 'Code invalide ou expiré' }, { status: 400 });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Verify OTP error:', error);
+    console.error('Send OTP error:', error);
     return NextResponse.json({ message: 'Une erreur est survenue' }, { status: 500 });
   }
 }
