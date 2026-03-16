@@ -105,7 +105,7 @@ export default function HomePage({ setCurrentPage }: HomePageProps) {
           Un projet de l'Institution Al Hanane 2 — Collège & Lycée
         </p>
         <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#aaa', margin: 0 }}>
-          Développé par Enayar • {new Date().getFullYear()}
+          Développé par Rayane Benchine • {new Date().getFullYear()}
         </p>
       </div>
     </div>
