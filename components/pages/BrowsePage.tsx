@@ -22,6 +22,13 @@ interface BrowsePageProps {
   user: any;
 }
 
+const STORAGE_BASE = 'https://hxpmqzzstnjhmmvalflj.supabase.co/storage/';
+
+function isSafeImageUrl(url: string | null): boolean {
+  if (!url) return false;
+  return url.startsWith(STORAGE_BASE);
+}
+
 export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,18 +51,34 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
       let query = supabase.from('books').select('*');
       if (filters.genre) query = query.eq('subject', filters.genre);
       if (filters.condition) query = query.eq('condition', filters.condition);
-      const { data: booksData, error } = await query.order('is_available', { ascending: false }).order('created_at', { ascending: false });
+      const { data: booksData, error } = await query
+        .order('is_available', { ascending: false })
+        .order('created_at', { ascending: false });
+
       if (error || !booksData) { setBooks([]); setIsLoading(false); return; }
       if (booksData.length === 0) { setBooks([]); setIsLoading(false); return; }
+
       const userIds = [...new Set(booksData.map(b => b.user_id))];
-      const { data: profilesData } = await supabase.from('profiles').select('id, first_name, last_name, email').in('id', userIds);
+
+      const res = await fetch('/api/profiles/owners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds }),
+      });
+      const { profiles } = await res.json();
+
       const profileMap: Record<string, any> = {};
-      profilesData?.forEach(p => { profileMap[p.id] = p; });
+      profiles?.forEach((p: any) => { profileMap[p.id] = p; });
+
       setBooks(booksData.map(b => ({
         ...b,
         genre: b.subject,
-        owner_name: profileMap[b.user_id] ? `${profileMap[b.user_id].first_name} ${profileMap[b.user_id].last_name}` : 'Inconnu',
+        owner_name: profileMap[b.user_id]
+          ? `${profileMap[b.user_id].first_name} ${profileMap[b.user_id].last_name}`
+          : 'Inconnu',
         owner_email: profileMap[b.user_id]?.email || '',
+        // Sanitize cover_url to only allow our own storage
+        cover_url: isSafeImageUrl(b.cover_url) ? b.cover_url : null,
       })));
     } catch { setBooks([]); }
     finally { setIsLoading(false); }
@@ -91,7 +114,6 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
       </p>
 
       <div className="card" style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* Search */}
         <div style={{ position: 'relative' }}>
           <Search size={18} strokeWidth={2} color="#888" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
           <input
@@ -103,8 +125,6 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
             style={{ paddingLeft: '44px' }}
           />
         </div>
-
-        {/* Filters */}
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '200px' }}>
             <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Genre</label>
@@ -165,7 +185,10 @@ export default function BrowsePage({ onSelectBook, user }: BrowsePageProps) {
                   <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', background: '#f0faf4', border: '1px solid #2d2d2d', borderRadius: '4px 8px 3px 6px / 8px 3px 6px 4px', padding: '2px 8px' }}>{book.genre}</span>
                   <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', background: book.is_available ? '#d4edda' : '#e5e0d8', border: '1px solid #2d2d2d', borderRadius: '4px 8px 3px 6px / 8px 3px 6px 4px', padding: '2px 8px' }}>{conditionLabel[book.condition] || book.condition}</span>
                 </div>
-                <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#555', marginBottom: '12px' }}>Par : <strong>{book.owner_name}</strong></p>
+                <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#555', marginBottom: '4px' }}>Par : <strong>{book.owner_name}</strong></p>
+                {user && book.owner_email && (
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#888', marginBottom: '8px' }}>{book.owner_email}</p>
+                )}
                 <div style={{ borderTop: '1px dashed #2d2d2d', paddingTop: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   {book.is_available ? (
                     <><Check size={16} strokeWidth={2.5} color="#2d8a4e" /><p style={{ fontFamily: 'Kalam, cursive', color: '#2d8a4e', fontSize: '1rem', margin: 0 }}>Échange gratuit</p></>

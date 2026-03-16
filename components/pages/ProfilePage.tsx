@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { BookOpen, Check, X, PenLine, ArrowLeftRight, Trash2 } from 'lucide-react';
+import { BookOpen, Check, X, PenLine, ArrowLeftRight, Trash2, Eye, EyeOff } from 'lucide-react';
 import Toast, { useToast } from '@/components/Toast';
 import ConfirmModal from '@/components/ConfirmModal';
 
@@ -33,8 +33,10 @@ export default function ProfilePage({ user, setCurrentPage }: ProfilePageProps) 
   const [books, setBooks] = useState<Book[]>([]);
   const [swaps, setSwaps] = useState<SwapOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'books' | 'swaps'>('books');
+  const [activeTab, setActiveTab] = useState<'books' | 'swaps' | 'settings'>('books');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showEmail, setShowEmail] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
   const { toasts, addToast, removeToast } = useToast();
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', confirmLabel: 'Confirmer', confirmDanger: false, onConfirm: () => {} });
 
@@ -48,15 +50,38 @@ export default function ProfilePage({ user, setCurrentPage }: ProfilePageProps) 
       const supabase = createClient();
       setIsLoading(true);
       try {
-        const { data: booksData } = await supabase.from('books').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-        setBooks(booksData || []);
-        const { data: swapsData } = await supabase.from('swap_offers').select('*').eq('book_owner_id', user.id).order('created_at', { ascending: false });
-        setSwaps(swapsData || []);
+        const [booksRes, swapsRes, profileRes] = await Promise.all([
+          supabase.from('books').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+          supabase.from('swap_offers').select('*').eq('book_owner_id', user.id).order('created_at', { ascending: false }),
+          supabase.from('profiles').select('show_email').eq('id', user.id).single(),
+        ]);
+        setBooks(booksRes.data || []);
+        setSwaps(swapsRes.data || []);
+        setShowEmail(profileRes.data?.show_email ?? false);
       } catch (err) { console.error(err); }
       finally { setIsLoading(false); }
     };
     load();
   }, [user.id]);
+
+  const handleToggleEmail = async () => {
+    setSavingEmail(true);
+    const supabase = createClient();
+    try {
+      const newVal = !showEmail;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ show_email: newVal })
+        .eq('id', user.id);
+      if (error) throw error;
+      setShowEmail(newVal);
+      addToast(newVal ? 'Email visible sur vos livres' : 'Email masqué sur vos livres', 'success');
+    } catch (err: any) {
+      addToast('Erreur : ' + err.message, 'error');
+    } finally {
+      setSavingEmail(false);
+    }
+  };
 
   const handleDeleteBook = async (bookId: string) => {
     setActionLoading(bookId);
@@ -112,10 +137,11 @@ export default function ProfilePage({ user, setCurrentPage }: ProfilePageProps) 
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
           {[
             { key: 'books', label: `Mes livres (${books.length})` },
             { key: 'swaps', label: `Échanges reçus (${swaps.length})` },
+            { key: 'settings', label: 'Paramètres' },
           ].map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key as any)} style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', padding: '8px 20px', background: activeTab === tab.key ? '#2d2d2d' : '#ffffff', color: activeTab === tab.key ? '#ffffff' : '#2d2d2d', border: '2px solid #2d2d2d', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', boxShadow: activeTab === tab.key ? '2px 2px 0px 0px #2d8a4e' : '4px 4px 0px 0px #2d2d2d', cursor: 'pointer', transition: 'all 0.1s ease' }}>
               {tab.label}
@@ -192,6 +218,67 @@ export default function ProfilePage({ user, setCurrentPage }: ProfilePageProps) 
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Settings tab */}
+        {activeTab === 'settings' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="card" style={{ position: 'relative' }}>
+              <div className="tape" />
+              <h3 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.5rem', marginBottom: '8px', marginTop: '8px' }}>Confidentialité</h3>
+              <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555', marginBottom: '24px', fontSize: '0.95rem' }}>
+                Contrôlez les informations visibles par les autres utilisateurs sur vos livres.
+              </p>
+
+              {/* Email visibility toggle */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', padding: '16px', background: '#fdfbf7', border: '2px solid #e5e0d8', borderRadius: '8px 4px 10px 3px / 4px 10px 3px 8px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    {showEmail
+                      ? <Eye size={18} strokeWidth={2} color="#2d8a4e" />
+                      : <EyeOff size={18} strokeWidth={2} color="#888" />
+                    }
+                    <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.1rem', margin: 0 }}>Afficher mon email</p>
+                    <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '999px', background: showEmail ? '#d4edda' : '#e5e0d8', color: showEmail ? '#1a6b3a' : '#555', border: `1px solid ${showEmail ? '#1a6b3a' : '#aaa'}` }}>
+                      {showEmail ? 'Activé' : 'Désactivé'}
+                    </span>
+                  </div>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: '#555', margin: 0 }}>
+                    {showEmail
+                      ? 'Votre email est visible par les utilisateurs connectés sur vos fiches de livres.'
+                      : 'Votre email est masqué. Les autres utilisateurs ne peuvent pas vous contacter directement.'
+                    }
+                  </p>
+                </div>
+                <button
+                  onClick={handleToggleEmail}
+                  disabled={savingEmail}
+                  style={{
+                    fontFamily: 'Patrick Hand, cursive',
+                    fontSize: '0.95rem',
+                    padding: '8px 20px',
+                    background: showEmail ? '#fde8e8' : '#f0faf4',
+                    color: showEmail ? '#cc3333' : '#2d8a4e',
+                    border: `2px solid ${showEmail ? '#cc3333' : '#2d8a4e'}`,
+                    borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px',
+                    boxShadow: `3px 3px 0px 0px ${showEmail ? '#cc3333' : '#2d8a4e'}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.1s ease',
+                    opacity: savingEmail ? 0.6 : 1,
+                    flexShrink: 0,
+                  }}
+                >
+                  {savingEmail ? '...' : showEmail ? 'Masquer' : 'Afficher'}
+                </button>
+              </div>
+
+              <div style={{ marginTop: '16px', padding: '12px 16px', background: '#f0faf4', border: '1px dashed #2d8a4e', borderRadius: '6px' }}>
+                <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#2d8a4e', margin: 0 }}>
+                   Même si votre email est masqué, le propriétaire d'un livre peut toujours vous contacter via le système de notification interne lors d'un échange.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>

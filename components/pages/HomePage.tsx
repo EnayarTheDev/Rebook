@@ -99,7 +99,7 @@ export default function HomePage({ setCurrentPage }: HomePageProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
           <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png" alt="ReBook" style={{ height: '24px', width: 'auto' }} />
           <span style={{ fontFamily: 'Patrick Hand, cursive', color: '#888', fontSize: '0.9rem' }}>×</span>
-          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/logo-H2-FOND-TRANSPARENT-e1452018760393.png" alt="Al Hanane 2" style={{ height: '24px', width: 'auto' }} />
+          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png" alt="Al Hanane 2" style={{ height: '44px', width: 'auto' }} />
         </div>
         <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: '#888', margin: 0, textAlign: 'center' }}>
           Un projet de l'Institution Al Hanane 2 — Collège & Lycée

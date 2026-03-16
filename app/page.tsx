@@ -30,12 +30,20 @@ export default function Home() {
         setIsLoading(false);
         return;
       }
-      setUser(sessionUser);
+
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, is_banned')
         .eq('id', sessionUser.id)
         .single();
+
+      if (profile?.is_banned) {
+        await supabase.auth.signOut();
+        window.location.href = '/auth/login';
+        return;
+      }
+
+      setUser(sessionUser);
       setUserRole(profile?.role || 'user');
       setIsLoading(false);
     };

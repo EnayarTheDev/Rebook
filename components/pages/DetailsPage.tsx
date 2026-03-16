@@ -31,6 +31,13 @@ interface DetailsPageProps {
   user: any;
 }
 
+const STORAGE_BASE = 'https://hxpmqzzstnjhmmvalflj.supabase.co/storage/';
+
+function isSafeImageUrl(url: string | null): boolean {
+  if (!url) return false;
+  return url.startsWith(STORAGE_BASE);
+}
+
 export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPageProps) {
   const [book, setBook] = useState<Book | null>(null);
   const [userBooks, setUserBooks] = useState<UserBook[]>([]);
@@ -49,13 +56,38 @@ export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPag
     try {
       const { data, error } = await supabase.from('books').select('*').eq('id', bookId).single();
       if (error) throw error;
-      const { data: profile } = await supabase.from('profiles').select('first_name, last_name, email').eq('id', data.user_id).single();
-      setBook({ ...data, owner_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Inconnu', owner_email: profile?.email || '' });
+
+      const res = await fetch('/api/profiles/owners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: [data.user_id] }),
+      });
+      const { profiles } = await res.json();
+      const profile = profiles?.[0];
+
+      setBook({
+        ...data,
+        owner_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Inconnu',
+        owner_email: profile?.email || '',
+        // Sanitize cover_url
+        cover_url: isSafeImageUrl(data.cover_url) ? data.cover_url : null,
+      });
+
       if (user) {
-        const { data: userBooksData } = await supabase.from('books').select('id, title, subject, condition').eq('user_id', user.id).eq('is_available', true);
+        const { data: userBooksData } = await supabase
+          .from('books')
+          .select('id, title, subject, condition')
+          .eq('user_id', user.id)
+          .eq('is_available', true);
         setUserBooks(userBooksData || []);
-        // Check if user already requested this book
-        const { data: existingOffer } = await supabase.from('swap_offers').select('id').eq('book_id', bookId).eq('requester_id', user.id).eq('status', 'pending').single();
+
+        const { data: existingOffer } = await supabase
+          .from('swap_offers')
+          .select('id')
+          .eq('book_id', bookId)
+          .eq('requester_id', user.id)
+          .eq('status', 'pending')
+          .single();
         if (existingOffer) setAlreadyRequested(true);
       }
     } catch (err) {
@@ -69,22 +101,22 @@ export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPag
     if (!user) { addToast('Veuillez vous connecter pour échanger des livres', 'error'); return; }
     if (selectedBooks.length === 0) { addToast('Veuillez sélectionner au moins un livre', 'error'); return; }
     if (!book) return;
-    const supabase = createClient();
+
     try {
-      const offeredBookTitles = selectedBooks.map(id => userBooks.find(b => b.id === id)?.title || 'Inconnu');
-      const { error } = await supabase.from('swap_offers').insert([{
-        book_id: bookId, book_owner_id: book.user_id, requester_id: user.id,
-        requester_name: user.user_metadata?.first_name || user.email?.split('@')[0] || 'Utilisateur',
-        requester_email: user.email, requested_book_title: book.title,
-        offered_books: offeredBookTitles, offered_book_ids: selectedBooks, status: 'pending',
-      }]);
-      if (error) throw error;
+      const res = await fetch('/api/swap/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookId, offeredBookIds: selectedBooks }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
       setSwapSuccess(true);
       setAlreadyRequested(true);
       setShowSwapForm(false);
       addToast('Demande envoyée ! Consultez vos notifications.', 'success');
     } catch (err: any) {
-      addToast("Erreur lors de la demande d'échange : " + err.message, 'error');
+      addToast('Erreur : ' + err.message, 'error');
     }
   };
 
@@ -142,7 +174,9 @@ export default function DetailsPage({ bookId, setCurrentPage, user }: DetailsPag
               <div>
                 <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', marginBottom: '4px' }}>Proposé par</p>
                 <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>{book.owner_name}</p>
-                <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: '#555', margin: 0 }}>{book.owner_email}</p>
+                {user && book.owner_email && (
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: '#555', margin: 0 }}>{book.owner_email}</p>
+                )}
               </div>
             </div>
 

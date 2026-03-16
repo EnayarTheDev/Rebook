@@ -89,9 +89,9 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
             />
             <div style={{ width: '1px', height: '22px', background: '#e5e0d8', flexShrink: 0 }} />
             <img
-              src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/logo-H2-FOND-TRANSPARENT-e1452018760393.png"
+              src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png"
               alt="Al Hanane 2"
-              style={{ height: '38px', width: 'auto' }}
+              style={{ height: '44px', width: 'auto' }}
             />
           </div>
 
@@ -260,7 +260,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
         <div onClick={() => { setCurrentPage('home'); router.push('/'); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png" alt="ReBook" style={{ height: '26px', width: 'auto' }} />
           <div style={{ width: '1px', height: '18px', background: '#e5e0d8' }} />
-          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/logo-H2-FOND-TRANSPARENT-e1452018760393.png" alt="Al Hanane 2" style={{ height: '32px', width: 'auto' }} />
+          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png" alt="Al Hanane 2" style={{ height: '39px', width: 'auto' }} />
         </div>
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

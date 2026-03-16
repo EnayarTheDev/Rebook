@@ -58,7 +58,12 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
     closeModal();
     const supabase = createClient();
     try {
-      const swapCode = Math.random().toString(36).substr(2, 8).toUpperCase();
+      // Cryptographically secure swap code
+      const swapCode = Array.from(crypto.getRandomValues(new Uint8Array(4)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase();
+
       const { error } = await supabase.from('swap_offers').update({ status: 'accepted', swap_code: swapCode }).eq('id', offerId);
       if (error) throw error;
       const offer = incoming.find(o => o.id === offerId);
@@ -158,7 +163,6 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
                   </div>
                   <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', padding: '4px 12px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', ...statusStyle(offer.status) }}>{statusLabel(offer.status)}</span>
                 </div>
-
                 <div style={{ padding: '12px', background: '#fdfbf7', border: '1px dashed #2d2d2d', borderRadius: '6px', marginBottom: '16px' }}>
                   <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', fontWeight: 700, marginBottom: '6px' }}>Livres proposés :</p>
                   {offer.offered_books?.map((book, idx) => (
@@ -168,7 +172,6 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
                     </div>
                   ))}
                 </div>
-
                 {offer.status === 'accepted' && offer.swap_code && (
                   <div style={{ padding: '16px', background: '#f0faf4', border: '2px solid #2d8a4e', borderRadius: '8px', boxShadow: '3px 3px 0px 0px #2d8a4e', marginBottom: '16px', textAlign: 'center' }}>
                     <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', marginBottom: '4px' }}>Code d'échange :</p>
@@ -176,7 +179,6 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
                     <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#555' }}>Présentez ce code au bureau d'administration</p>
                   </div>
                 )}
-
                 {offer.status === 'pending' && (
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <button className="btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={() => openModal('Accepter l\'échange', `Accepter l'échange avec ${offer.requester_name} pour "${offer.requested_book_title}" ?`, 'Accepter', false, () => handleAccept(offer.id))}>
@@ -208,7 +210,6 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
                   </div>
                   <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', padding: '4px 12px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', ...statusStyle(offer.status) }}>{statusLabel(offer.status)}</span>
                 </div>
-
                 <div style={{ padding: '12px', background: '#fdfbf7', border: '1px dashed #2d2d2d', borderRadius: '6px', marginBottom: '16px' }}>
                   <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', fontWeight: 700, marginBottom: '6px' }}>Vous avez proposé :</p>
                   {offer.offered_books?.map((book, idx) => (
@@ -218,7 +219,6 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
                     </div>
                   ))}
                 </div>
-
                 {offer.status === 'accepted' && offer.swap_code && (
                   <div style={{ padding: '16px', background: '#f0faf4', border: '2px solid #2d8a4e', borderRadius: '8px', boxShadow: '3px 3px 0px 0px #2d8a4e', marginBottom: '16px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
@@ -230,14 +230,12 @@ export default function NotificationsPage({ user }: NotificationsPageProps) {
                     <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#555' }}>Présentez ce code au bureau d'administration</p>
                   </div>
                 )}
-
                 {offer.status === 'declined' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <X size={16} strokeWidth={2.5} color="#cc3333" />
                     <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#cc3333', fontWeight: 700, margin: 0 }}>Votre demande a été refusée.</p>
                   </div>
                 )}
-
                 {offer.status === 'pending' && (
                   <button className="btn-danger" onClick={() => openModal('Annuler la demande', `Annuler votre demande pour "${offer.requested_book_title}" ?`, 'Annuler', true, () => handleCancel(offer.id))} style={{ fontSize: '0.9rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <X size={14} strokeWidth={2.5} /> Annuler la demande

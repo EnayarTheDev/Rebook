@@ -2,20 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 
+const ALLOWED_ORIGINS = ['https://rebookswap.vercel.app', 'http://localhost:3000'];
+
 export async function POST(request: NextRequest) {
   try {
+    const origin = request.headers.get('origin');
+    if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
+
     const { approvalId } = await request.json();
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     if (!profile || !['admin', 'owner'].includes(profile.role)) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
@@ -59,26 +61,21 @@ export async function POST(request: NextRequest) {
     }
 
     if (userId) {
-      await adminSupabase
-        .from('profiles')
-        .upsert({
-          id: userId,
-          email: approval.email,
-          first_name: approval.first_name,
-          last_name: approval.last_name,
-          role: 'user',
-          is_banned: false,
-        }, { onConflict: 'id' });
+      await adminSupabase.from('profiles').upsert({
+        id: userId,
+        email: approval.email,
+        first_name: approval.first_name,
+        last_name: approval.last_name,
+        role: 'user',
+        is_banned: false,
+      }, { onConflict: 'id' });
     }
 
-    await supabase
-      .from('approval_requests')
-      .update({ status: 'approved' })
-      .eq('id', approvalId);
+    await supabase.from('approval_requests').update({ status: 'approved' }).eq('id', approvalId);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Approve error:', error);
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return NextResponse.json({ message: 'Une erreur est survenue' }, { status: 500 });
   }
 }
