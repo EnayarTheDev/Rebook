@@ -31,7 +31,11 @@ export default function Home() {
         return;
       }
       setUser(sessionUser);
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', sessionUser.id).single();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', sessionUser.id)
+        .single();
       setUserRole(profile?.role || 'user');
       setIsLoading(false);
     };
@@ -60,9 +64,9 @@ export default function Home() {
 
   if (!user) {
     return (
-      <>
+      <div style={{ minHeight: '100vh' }}>
         <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} user={user} userRole={null} />
-        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px', paddingBottom: '90px' }}>
+        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px', paddingBottom: '90px' }}>
           {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} />}
           {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
           {currentPage === 'details' && selectedBookId && (
@@ -77,14 +81,14 @@ export default function Home() {
             </div>
           )}
         </main>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div style={{ minHeight: '100vh' }}>
       <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} user={user} userRole={userRole} />
-      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 20px', paddingBottom: '90px' }}>
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px', paddingBottom: '90px' }}>
         {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} />}
         {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
         {currentPage === 'offer' && <OfferBooksPage setCurrentPage={setCurrentPage} user={user} />}
@@ -95,6 +99,6 @@ export default function Home() {
           <DetailsPage bookId={selectedBookId} setCurrentPage={setCurrentPage} user={user} />
         )}
       </main>
-    </>
+    </div>
   );
 }
