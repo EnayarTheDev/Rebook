@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 
-// Simple in-memory rate limiter — max 3 requests per IP per hour
+// Simple in-memory rate limiter — max 10 requests per IP per hour
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function isRateLimited(ip: string): boolean {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     const { data: existing } = await supabase
       .from('approval_requests')
