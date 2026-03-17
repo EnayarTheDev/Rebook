@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useState, useEffect } from 'react';
-import { Bell, Settings, LogOut, ChevronDown, Home, BookOpen, PenLine, User } from 'lucide-react';
+import { Bell, Settings, LogOut, ChevronDown, Home, BookOpen, PenLine, User, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface NavigationProps {
   currentPage: string;
@@ -16,6 +17,8 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -28,6 +31,15 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
     await supabase.auth.signOut();
     window.location.href = '/';
   };
+
+  const navBg = isDark ? '#1e1e1e' : '#fdfbf7';
+  const navBorder = isDark ? '#3a3a3a' : '#2d2d2d';
+  const navShadow = isDark ? '#000000' : '#2d2d2d';
+  const textColor = isDark ? '#eeeae0' : '#2d2d2d';
+  const mutedText = isDark ? '#777' : '#888';
+  const dropdownBg = isDark ? '#1a1a1a' : '#fdfbf7';
+  const hoverBg = isDark ? 'rgba(61,186,106,0.1)' : '#f0faf4';
+  const dividerColor = isDark ? '#2a2a2a' : '#e5e0d8';
 
   const tabItems = [
     { key: 'home', label: 'Accueil', icon: <Home size={22} strokeWidth={2.5} /> },
@@ -67,17 +79,17 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '8px',
-          background: '#fdfbf7',
-          border: '2px solid #2d2d2d',
+          background: navBg,
+          border: `2px solid ${navBorder}`,
           borderRadius: '999px',
           padding: '10px 14px',
-          boxShadow: scrolled ? '6px 6px 0px 0px #2d2d2d' : '4px 4px 0px 0px #2d2d2d',
-          transition: 'box-shadow 0.2s ease',
+          boxShadow: scrolled ? `6px 6px 0px 0px ${navShadow}` : `4px 4px 0px 0px ${navShadow}`,
+          transition: 'box-shadow 0.2s ease, background 0.2s ease',
           maxWidth: '980px',
           width: '100%',
         }}>
 
-          {/* Logos */}
+          {/* Logos — no filter, transparent backgrounds work on both themes */}
           <div
             onClick={() => { setCurrentPage('home'); router.push('/'); }}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}
@@ -85,13 +97,13 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
             <img
               src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png"
               alt="ReBook"
-              style={{ height: '30px', width: 'auto' }}
+              style={{ height: '30px', width: 'auto', display: 'block' }}
             />
-            <div style={{ width: '1px', height: '22px', background: '#e5e0d8', flexShrink: 0 }} />
+            <div style={{ width: '1px', height: '22px', background: dividerColor, flexShrink: 0 }} />
             <img
               src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png"
               alt="Al Hanane 2"
-              style={{ height: '44px', width: 'auto' }}
+              style={{ height: '48px', width: 'auto', display: 'block' }}
             />
           </div>
 
@@ -104,8 +116,8 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
                 style={{
                   fontFamily: 'Patrick Hand, cursive',
                   fontSize: '1rem',
-                  color: currentPage === item.key ? '#ffffff' : '#2d2d2d',
-                  background: currentPage === item.key ? '#2d8a4e' : 'transparent',
+                  color: currentPage === item.key ? '#ffffff' : textColor,
+                  background: currentPage === item.key ? (isDark ? '#3dba6a' : '#2d8a4e') : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   padding: '7px 14px',
@@ -119,14 +131,14 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
                 }}
                 onMouseEnter={e => {
                   if (currentPage !== item.key) {
-                    (e.currentTarget as HTMLButtonElement).style.background = '#f0faf4';
-                    (e.currentTarget as HTMLButtonElement).style.color = '#2d8a4e';
+                    (e.currentTarget as HTMLButtonElement).style.background = hoverBg;
+                    (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#3dba6a' : '#2d8a4e';
                   }
                 }}
                 onMouseLeave={e => {
                   if (currentPage !== item.key) {
                     (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-                    (e.currentTarget as HTMLButtonElement).style.color = '#2d2d2d';
+                    (e.currentTarget as HTMLButtonElement).style.color = textColor;
                   }
                 }}
               >
@@ -138,6 +150,31 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
 
           {/* Right side */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              title={isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+              style={{
+                background: 'none',
+                border: `2px solid ${navBorder}`,
+                borderRadius: '999px',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: textColor,
+                transition: 'all 0.15s ease',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = hoverBg}
+              onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'none'}
+            >
+              {isDark ? <Sun size={16} strokeWidth={2.5} /> : <Moon size={16} strokeWidth={2.5} />}
+            </button>
+
             {user ? (
               <div style={{ position: 'relative' }}>
                 <button
@@ -145,9 +182,9 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
                   style={{
                     fontFamily: 'Patrick Hand, cursive',
                     fontSize: '1rem',
-                    background: '#2d8a4e',
+                    background: isDark ? '#3dba6a' : '#2d8a4e',
                     color: '#ffffff',
-                    border: '2px solid #2d2d2d',
+                    border: `2px solid ${navBorder}`,
                     borderRadius: '999px',
                     padding: '7px 16px',
                     cursor: 'pointer',
@@ -156,17 +193,17 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
                     gap: '6px',
                     transition: 'all 0.15s ease',
                     fontWeight: 600,
-                    boxShadow: '2px 2px 0px 0px #2d2d2d',
+                    boxShadow: `2px 2px 0px 0px ${navShadow}`,
                     whiteSpace: 'nowrap',
                   }}
                   onMouseEnter={e => {
                     (e.currentTarget as HTMLButtonElement).style.background = '#1a6b3a';
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow = '1px 1px 0px 0px #2d2d2d';
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `1px 1px 0px 0px ${navShadow}`;
                     (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)';
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLButtonElement).style.background = '#2d8a4e';
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow = '2px 2px 0px 0px #2d2d2d';
+                    (e.currentTarget as HTMLButtonElement).style.background = isDark ? '#3dba6a' : '#2d8a4e';
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `2px 2px 0px 0px ${navShadow}`;
                     (e.currentTarget as HTMLButtonElement).style.transform = 'translate(0, 0)';
                   }}
                 >
@@ -177,32 +214,41 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
                     position: 'absolute',
                     right: 0,
                     top: 'calc(100% + 10px)',
-                    background: '#fdfbf7',
-                    border: '2px solid #2d2d2d',
+                    background: dropdownBg,
+                    border: `2px solid ${navBorder}`,
                     borderRadius: '16px',
                     padding: '8px',
                     minWidth: '200px',
                     zIndex: 50,
-                    boxShadow: '4px 4px 0px 0px #2d2d2d',
+                    boxShadow: `4px 4px 0px 0px ${navShadow}`,
                   }}>
-                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#888', padding: '6px 10px', borderBottom: '1px dashed #e5e0d8', marginBottom: '4px' }}>{user.email}</p>
+                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: mutedText, padding: '6px 10px', borderBottom: `1px dashed ${dividerColor}`, marginBottom: '4px' }}>{user.email}</p>
                     {userRole && (
-                      <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#555', padding: '6px 10px', borderBottom: '1px dashed #e5e0d8', marginBottom: '4px' }}>
-                        Rôle: <span style={{ color: '#2d8a4e', fontWeight: 700 }}>{userRole}</span>
+                      <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: mutedText, padding: '6px 10px', borderBottom: `1px dashed ${dividerColor}`, marginBottom: '4px' }}>
+                        Rôle: <span style={{ color: isDark ? '#3dba6a' : '#2d8a4e', fontWeight: 700 }}>{userRole}</span>
                       </p>
                     )}
                     <button
                       onClick={() => { setCurrentPage('profile'); setShowDropdown(false); }}
-                      style={{ fontFamily: 'Patrick Hand, cursive', background: 'none', border: 'none', color: '#2d2d2d', cursor: 'pointer', padding: '7px 10px', width: '100%', textAlign: 'left', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', transition: 'background 0.1s ease' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = '#f0faf4'}
+                      style={{ fontFamily: 'Patrick Hand, cursive', background: 'none', border: 'none', color: textColor, cursor: 'pointer', padding: '7px 10px', width: '100%', textAlign: 'left', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', transition: 'background 0.1s ease' }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = hoverBg}
                       onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                     >
                       <User size={14} strokeWidth={2.5} /> Mon profil
                     </button>
                     <button
+                      onClick={toggleTheme}
+                      style={{ fontFamily: 'Patrick Hand, cursive', background: 'none', border: 'none', color: textColor, cursor: 'pointer', padding: '7px 10px', width: '100%', textAlign: 'left', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', transition: 'background 0.1s ease' }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = hoverBg}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
+                    >
+                      {isDark ? <Sun size={14} strokeWidth={2.5} /> : <Moon size={14} strokeWidth={2.5} />}
+                      {isDark ? 'Mode clair' : 'Mode sombre'}
+                    </button>
+                    <button
                       onClick={handleLogout}
-                      style={{ fontFamily: 'Patrick Hand, cursive', background: 'none', border: 'none', color: '#cc3333', cursor: 'pointer', padding: '7px 10px', width: '100%', textAlign: 'left', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', transition: 'background 0.1s ease' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = '#fde8e8'}
+                      style={{ fontFamily: 'Patrick Hand, cursive', background: 'none', border: 'none', color: '#ff5555', cursor: 'pointer', padding: '7px 10px', width: '100%', textAlign: 'left', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '8px', transition: 'background 0.1s ease' }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,85,85,0.1)' : '#fde8e8'}
                       onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
                     >
                       <LogOut size={14} strokeWidth={2.5} /> Déconnexion
@@ -216,25 +262,25 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
                 style={{
                   fontFamily: 'Patrick Hand, cursive',
                   fontSize: '1rem',
-                  background: '#2d8a4e',
+                  background: isDark ? '#3dba6a' : '#2d8a4e',
                   color: '#ffffff',
-                  border: '2px solid #2d2d2d',
+                  border: `2px solid ${navBorder}`,
                   borderRadius: '999px',
                   padding: '7px 20px',
                   cursor: 'pointer',
                   fontWeight: 600,
                   transition: 'all 0.15s ease',
-                  boxShadow: '2px 2px 0px 0px #2d2d2d',
+                  boxShadow: `2px 2px 0px 0px ${navShadow}`,
                   whiteSpace: 'nowrap',
                 }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLButtonElement).style.background = '#1a6b3a';
-                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '1px 1px 0px 0px #2d2d2d';
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = `1px 1px 0px 0px ${navShadow}`;
                   (e.currentTarget as HTMLButtonElement).style.transform = 'translate(1px, 1px)';
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLButtonElement).style.background = '#2d8a4e';
-                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '2px 2px 0px 0px #2d2d2d';
+                  (e.currentTarget as HTMLButtonElement).style.background = isDark ? '#3dba6a' : '#2d8a4e';
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = `2px 2px 0px 0px ${navShadow}`;
                   (e.currentTarget as HTMLButtonElement).style.transform = 'translate(0, 0)';
                 }}
               >
@@ -247,8 +293,8 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
 
       {/* ── Mobile Top Bar ── */}
       <div className="mobile-nav" style={{
-        background: '#fdfbf7',
-        borderBottom: '2px solid #2d2d2d',
+        background: navBg,
+        borderBottom: `2px solid ${navBorder}`,
         position: 'sticky',
         top: 0,
         zIndex: 50,
@@ -256,27 +302,36 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
         alignItems: 'center',
         justifyContent: 'space-between',
         width: '100%',
+        transition: 'background 0.2s ease',
       }}>
         <div onClick={() => { setCurrentPage('home'); router.push('/'); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png" alt="ReBook" style={{ height: '26px', width: 'auto' }} />
-          <div style={{ width: '1px', height: '18px', background: '#e5e0d8' }} />
-          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png" alt="Al Hanane 2" style={{ height: '39px', width: 'auto' }} />
+          <div style={{ width: '1px', height: '18px', background: dividerColor }} />
+          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/alhanane-logo-cropped.png" alt="Al Hanane 2" style={{ height: '40px', width: 'auto' }} />
         </div>
-        {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#555' }}>{user.email?.split('@')[0]}</span>
-            <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#cc3333', display: 'flex', alignItems: 'center' }}>
-              <LogOut size={16} strokeWidth={2.5} />
-            </button>
-          </div>
-        ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
-            onClick={() => router.push('/auth/request-approval')}
-            style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', background: '#2d8a4e', color: '#ffffff', border: '2px solid #2d2d2d', borderRadius: '999px', padding: '6px 14px', cursor: 'pointer', boxShadow: '2px 2px 0px 0px #2d2d2d' }}
+            onClick={toggleTheme}
+            style={{ background: 'none', border: `2px solid ${navBorder}`, borderRadius: '999px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: textColor }}
           >
-            Commencer
+            {isDark ? <Sun size={14} strokeWidth={2.5} /> : <Moon size={14} strokeWidth={2.5} />}
           </button>
-        )}
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: textColor }}>{user.email?.split('@')[0]}</span>
+              <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ff5555', display: 'flex', alignItems: 'center' }}>
+                <LogOut size={16} strokeWidth={2.5} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => router.push('/auth/request-approval')}
+              style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', background: isDark ? '#3dba6a' : '#2d8a4e', color: '#ffffff', border: `2px solid ${navBorder}`, borderRadius: '999px', padding: '6px 14px', cursor: 'pointer', boxShadow: `2px 2px 0px 0px ${navShadow}` }}
+            >
+              Commencer
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Mobile Bottom Tab Bar ── */}
@@ -286,14 +341,15 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
           bottom: 0,
           left: 0,
           right: 0,
-          background: '#fdfbf7',
-          borderTop: '2px solid #2d2d2d',
+          background: navBg,
+          borderTop: `2px solid ${navBorder}`,
           alignItems: 'center',
           justifyContent: 'space-around',
           padding: '8px 0',
           paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
           zIndex: 50,
-          boxShadow: '0 -4px 0px 0px #2d2d2d',
+          boxShadow: `0 -4px 0px 0px ${navShadow}`,
+          transition: 'background 0.2s ease',
         }}>
           {tabItems.map(item => (
             <button
@@ -307,7 +363,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: currentPage === item.key ? '#2d8a4e' : '#888',
+                color: currentPage === item.key ? (isDark ? '#3dba6a' : '#2d8a4e') : mutedText,
                 padding: '4px 8px',
                 flex: 1,
                 transition: 'color 0.1s ease',
@@ -316,7 +372,7 @@ export default function Navigation({ currentPage, setCurrentPage, user, userRole
               {item.icon}
               <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.65rem' }}>{item.label}</span>
               {currentPage === item.key && (
-                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#2d8a4e', marginTop: '2px' }} />
+                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: isDark ? '#3dba6a' : '#2d8a4e', marginTop: '2px' }} />
               )}
             </button>
           ))}

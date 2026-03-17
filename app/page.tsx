@@ -11,6 +11,7 @@ import DetailsPage from '@/components/pages/DetailsPage';
 import NotificationsPage from '@/components/pages/NotificationsPage';
 import AdminDashboard from '@/components/pages/AdminDashboard';
 import ProfilePage from '@/components/pages/ProfilePage';
+import ThemeProvider from '@/components/ThemeProvider';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -64,49 +65,55 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#fdfbf7' }}>
-        <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.5rem', color: '#2d2d2d' }}>Chargement...</p>
-      </div>
+      <ThemeProvider>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)' }}>
+          <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.5rem', color: 'var(--fg)' }}>Chargement...</p>
+        </div>
+      </ThemeProvider>
     );
   }
 
   if (!user) {
     return (
-      <div style={{ minHeight: '100vh' }}>
-        <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} user={user} userRole={null} />
-        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px', paddingBottom: '90px' }}>
-          {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} />}
-          {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
-          {currentPage === 'details' && selectedBookId && (
-            <DetailsPage bookId={selectedBookId} setCurrentPage={setCurrentPage} user={user} />
-          )}
-          {currentPage !== 'home' && currentPage !== 'browse' && currentPage !== 'details' && (
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <h2 style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', marginBottom: '16px' }}>Connectez-vous pour continuer</h2>
-              <button onClick={() => router.push('/auth/request-approval')} className="btn-primary" style={{ fontSize: '1.1rem', padding: '12px 32px' }}>
-                Demander l'accès
-              </button>
-            </div>
-          )}
-        </main>
-      </div>
+      <ThemeProvider>
+        <div style={{ minHeight: '100vh' }}>
+          <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} user={user} userRole={null} />
+          <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px', paddingBottom: '90px' }}>
+            {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} />}
+            {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
+            {currentPage === 'details' && selectedBookId && (
+              <DetailsPage bookId={selectedBookId} setCurrentPage={setCurrentPage} user={user} />
+            )}
+            {currentPage !== 'home' && currentPage !== 'browse' && currentPage !== 'details' && (
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <h2 style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', marginBottom: '16px' }}>Connectez-vous pour continuer</h2>
+                <button onClick={() => router.push('/auth/request-approval')} className="btn-primary" style={{ fontSize: '1.1rem', padding: '12px 32px' }}>
+                  Demander l'accès
+                </button>
+              </div>
+            )}
+          </main>
+        </div>
+      </ThemeProvider>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} user={user} userRole={userRole} />
-      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px', paddingBottom: '90px' }}>
-        {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} />}
-        {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
-        {currentPage === 'offer' && <OfferBooksPage setCurrentPage={setCurrentPage} user={user} />}
-        {currentPage === 'notifications' && <NotificationsPage user={user} />}
-        {currentPage === 'profile' && <ProfilePage user={user} setCurrentPage={setCurrentPage} />}
-        {currentPage === 'admin' && (userRole === 'admin' || userRole === 'owner') && <AdminDashboard userRole={userRole} user={user} />}
-        {currentPage === 'details' && selectedBookId && (
-          <DetailsPage bookId={selectedBookId} setCurrentPage={setCurrentPage} user={user} />
-        )}
-      </main>
-    </div>
+    <ThemeProvider>
+      <div style={{ minHeight: '100vh' }}>
+        <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} user={user} userRole={userRole} />
+        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 20px', paddingBottom: '90px' }}>
+          {currentPage === 'home' && <HomePage setCurrentPage={setCurrentPage} />}
+          {currentPage === 'browse' && <BrowsePage onSelectBook={handleSelectBook} user={user} />}
+          {currentPage === 'offer' && <OfferBooksPage setCurrentPage={setCurrentPage} user={user} />}
+          {currentPage === 'notifications' && <NotificationsPage user={user} />}
+          {currentPage === 'profile' && <ProfilePage user={user} setCurrentPage={setCurrentPage} />}
+          {currentPage === 'admin' && (userRole === 'admin' || userRole === 'owner') && <AdminDashboard userRole={userRole} user={user} />}
+          {currentPage === 'details' && selectedBookId && (
+            <DetailsPage bookId={selectedBookId} setCurrentPage={setCurrentPage} user={user} />
+          )}
+        </main>
+      </div>
+    </ThemeProvider>
   );
 }

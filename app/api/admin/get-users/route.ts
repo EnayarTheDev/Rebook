@@ -2,20 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 
-const ALLOWED_ORIGINS = ['https://rebookswap.vercel.app', 'http://localhost:3000'];
-
 export async function GET(request: NextRequest) {
   try {
-    const origin = request.headers.get('origin');
-    if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
-
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
 
-    const { data: callerProfile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const { data: callerProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
     if (!callerProfile || !['admin', 'owner'].includes(callerProfile.role)) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }

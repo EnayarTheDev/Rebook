@@ -59,14 +59,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toasts, addToast, removeToast } = useToast();
-  const [modal, setModal] = useState<ModalState>({
-    isOpen: false,
-    title: '',
-    message: '',
-    confirmLabel: 'Confirmer',
-    confirmDanger: false,
-    onConfirm: () => {},
-  });
+  const [modal, setModal] = useState<ModalState>({ isOpen: false, title: '', message: '', confirmLabel: 'Confirmer', confirmDanger: false, onConfirm: () => {} });
 
   const isOwner = userRole === 'owner';
   const isAdminOrOwner = userRole === 'admin' || userRole === 'owner';
@@ -74,7 +67,6 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
   const openModal = (title: string, message: string, confirmLabel: string, confirmDanger: boolean, onConfirm: () => void) => {
     setModal({ isOpen: true, title, message, confirmLabel, confirmDanger, onConfirm });
   };
-
   const closeModal = () => setModal(prev => ({ ...prev, isOpen: false }));
 
   useEffect(() => { loadAllData(); }, []);
@@ -85,6 +77,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
     try {
       const { data: approvalsData } = await supabase.from('approval_requests').select('*').order('created_at', { ascending: false });
       setApprovals(approvalsData || []);
+
       const { data: booksData } = await supabase.from('books').select('*').order('created_at', { ascending: false });
       if (booksData && booksData.length > 0) {
         const userIds = [...new Set(booksData.map((b: any) => b.user_id))];
@@ -93,6 +86,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
         profilesForBooks?.forEach((p: any) => { profileMap[p.id] = p; });
         setBooks(booksData.map((b: any) => ({ ...b, owner_email: profileMap[b.user_id]?.email || 'Inconnu' })));
       } else { setBooks([]); }
+
       const usersRes = await fetch('/api/admin/get-users');
       if (usersRes.ok) {
         const usersJson = await usersRes.json();
@@ -103,8 +97,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
   };
 
   const handleApprove = async (id: string) => {
-    setActionLoading(id);
-    closeModal();
+    setActionLoading(id); closeModal();
     try {
       const res = await fetch('/api/admin/approve-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approvalId: id }) });
       const data = await res.json();
@@ -116,8 +109,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
   };
 
   const handleReject = async (id: string) => {
-    setActionLoading(id);
-    closeModal();
+    setActionLoading(id); closeModal();
     const supabase = createClient();
     try {
       await supabase.from('approval_requests').update({ status: 'rejected' }).eq('id', id);
@@ -128,8 +120,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
   };
 
   const handleRemoveBook = async (bookId: string) => {
-    setActionLoading(bookId);
-    closeModal();
+    setActionLoading(bookId); closeModal();
     const supabase = createClient();
     try {
       const { error } = await supabase.from('books').delete().eq('id', bookId);
@@ -153,8 +144,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
   };
 
   const handleBanUser = async (userId: string, currentlyBanned: boolean) => {
-    setActionLoading(userId);
-    closeModal();
+    setActionLoading(userId); closeModal();
     try {
       const res = await fetch('/api/admin/ban-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, isBanned: !currentlyBanned }) });
       const data = await res.json();
@@ -166,8 +156,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
   };
 
   const handleKickUser = async (userId: string, userEmail: string) => {
-    setActionLoading(userId);
-    closeModal();
+    setActionLoading(userId); closeModal();
     try {
       const res = await fetch('/api/admin/kick-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
       const data = await res.json();
@@ -180,8 +169,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
 
   const handleSetRole = async (userId: string, newRole: 'admin' | 'user') => {
     if (!isOwner) return;
-    setActionLoading(userId);
-    closeModal();
+    setActionLoading(userId); closeModal();
     try {
       const res = await fetch('/api/admin/set-role', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, role: newRole }) });
       const data = await res.json();
@@ -193,14 +181,14 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
   };
 
   const roleBadge = (role: string) => {
-    const configs: Record<string, { bg: string; color: string; border: string; icon: React.ReactNode; label: string }> = {
-      owner: { bg: '#f0faf4', color: '#1a6b3a', border: '#1a6b3a', icon: <Crown size={12} strokeWidth={2.5} />, label: 'Propriétaire' },
-      admin: { bg: '#d4edda', color: '#2d8a4e', border: '#2d8a4e', icon: <Shield size={12} strokeWidth={2.5} />, label: 'Admin' },
-      user: { bg: '#e5e0d8', color: '#2d2d2d', border: '#2d2d2d', icon: <User size={12} strokeWidth={2.5} />, label: 'Utilisateur' },
+    const configs: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+      owner: { icon: <Crown size={12} strokeWidth={2.5} />, label: 'Propriétaire', color: 'var(--accent)' },
+      admin: { icon: <Shield size={12} strokeWidth={2.5} />, label: 'Admin', color: 'var(--accent)' },
+      user: { icon: <User size={12} strokeWidth={2.5} />, label: 'Utilisateur', color: 'var(--subtle)' },
     };
     const c = configs[role] || configs.user;
     return (
-      <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', padding: '2px 10px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', background: c.bg, color: c.color, border: `1px solid ${c.border}`, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+      <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', padding: '2px 10px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', background: 'var(--yellow)', color: c.color, border: `1px solid var(--border)`, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
         {c.icon} {c.label}
       </span>
     );
@@ -221,49 +209,43 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         {[1, 2, 3, 4].map(i => (
-          <div key={i} style={{ height: '100px', background: 'linear-gradient(90deg, #e5e0d8 25%, #f0ece4 50%, #e5e0d8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px' }} />
+          <div key={i} style={{ height: '100px', background: 'linear-gradient(90deg, var(--muted) 25%, var(--bg) 50%, var(--muted) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px' }} />
         ))}
       </div>
     </div>
   );
 
+  const statCards = [
+    { icon: <BookOpen size={24} strokeWidth={2} color="var(--accent)" />, label: 'Total livres', value: totalBooks },
+    { icon: <ArrowLeftRight size={24} strokeWidth={2} color="var(--accent)" />, label: 'Échanges faits', value: swappedBooks },
+    { icon: <Users size={24} strokeWidth={2} color="var(--accent)" />, label: 'Utilisateurs', value: totalUsers },
+    { icon: <AlertTriangle size={24} strokeWidth={2} color="var(--danger)" />, label: 'En attente', value: pendingApprovals },
+  ];
+
   return (
     <>
       <Toast toasts={toasts} removeToast={removeToast} />
-      <ConfirmModal
-        isOpen={modal.isOpen}
-        title={modal.title}
-        message={modal.message}
-        confirmLabel={modal.confirmLabel}
-        confirmDanger={modal.confirmDanger}
-        onConfirm={modal.onConfirm}
-        onCancel={closeModal}
-      />
+      <ConfirmModal isOpen={modal.isOpen} title={modal.title} message={modal.message} confirmLabel={modal.confirmLabel} confirmDanger={modal.confirmDanger} onConfirm={modal.onConfirm} onCancel={closeModal} />
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' }}>
         <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Settings size={32} strokeWidth={2} color="#2d8a4e" />
+          <Settings size={32} strokeWidth={2} color="var(--accent)" />
           <div>
-            <h1 style={{ fontFamily: 'Kalam, cursive', fontSize: '2.5rem', margin: 0, transform: 'rotate(-1deg)', display: 'inline-block' }}>Dashboard Admin</h1>
-            <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555', fontSize: '1rem', margin: 0 }}>{isOwner ? 'Propriétaire — accès complet' : 'Admin — gestion des utilisateurs et contenus'}</p>
+            <h1 style={{ fontFamily: 'Kalam, cursive', fontSize: '2.5rem', margin: 0, transform: 'rotate(-1deg)', display: 'inline-block', color: 'var(--fg)' }}>Dashboard Admin</h1>
+            <p style={{ fontFamily: 'Patrick Hand, cursive', color: 'var(--subtle)', fontSize: '1rem', margin: 0 }}>{isOwner ? 'Propriétaire — accès complet' : 'Admin — gestion des utilisateurs et contenus'}</p>
           </div>
         </div>
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-          {[
-            { icon: <BookOpen size={24} strokeWidth={2} color="#2d8a4e" />, label: 'Total livres', value: totalBooks, bg: '#f0faf4' },
-            { icon: <ArrowLeftRight size={24} strokeWidth={2} color="#2d5da1" />, label: 'Échanges faits', value: swappedBooks, bg: '#e8f0fe' },
-            { icon: <Users size={24} strokeWidth={2} color="#2d8a4e" />, label: 'Utilisateurs', value: totalUsers, bg: '#f0faf4' },
-            { icon: <AlertTriangle size={24} strokeWidth={2} color="#cc3333" />, label: 'En attente', value: pendingApprovals, bg: '#fde8e8' },
-          ].map((stat, i) => (
-            <div key={i} style={{ background: stat.bg, border: '2px solid #2d2d2d', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px #2d2d2d', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '48px', height: '48px', background: '#ffffff', border: '2px solid #2d2d2d', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '2px 2px 0px 0px #2d2d2d' }}>
+          {statCards.map((stat, i) => (
+            <div key={i} style={{ background: 'var(--card-bg)', border: '2px solid var(--border)', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px var(--shadow)', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ width: '48px', height: '48px', background: 'var(--yellow)', border: '2px solid var(--border)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '2px 2px 0px 0px var(--shadow)' }}>
                 {stat.icon}
               </div>
               <div>
-                <p style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', margin: 0, lineHeight: 1 }}>{stat.value}</p>
-                <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: '#555', margin: 0 }}>{stat.label}</p>
+                <p style={{ fontFamily: 'Kalam, cursive', fontSize: '2rem', margin: 0, lineHeight: 1, color: 'var(--fg)' }}>{stat.value}</p>
+                <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', color: 'var(--subtle)', margin: 0 }}>{stat.label}</p>
               </div>
             </div>
           ))}
@@ -272,7 +254,7 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
           {tabs.map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', padding: '8px 20px', background: activeTab === tab.key ? '#2d2d2d' : '#ffffff', color: activeTab === tab.key ? '#ffffff' : '#2d2d2d', border: '2px solid #2d2d2d', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', boxShadow: activeTab === tab.key ? '2px 2px 0px 0px #2d8a4e' : '4px 4px 0px 0px #2d2d2d', cursor: 'pointer', transition: 'all 0.1s ease' }}>
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', padding: '8px 20px', background: activeTab === tab.key ? 'var(--fg)' : 'var(--card-bg)', color: activeTab === tab.key ? 'var(--bg)' : 'var(--fg)', border: '2px solid var(--border)', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', boxShadow: activeTab === tab.key ? '2px 2px 0px 0px var(--accent)' : '4px 4px 0px 0px var(--shadow)', cursor: 'pointer', transition: 'all 0.1s ease' }}>
               {tab.label}
             </button>
           ))}
@@ -282,28 +264,28 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
         {activeTab === 'approvals' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {approvals.length === 0 ? (
-              <div className="card-yellow" style={{ textAlign: 'center', padding: '48px' }}><p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.3rem' }}>Aucune demande</p></div>
+              <div className="card-yellow" style={{ textAlign: 'center', padding: '48px' }}><p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.3rem', color: 'var(--fg)' }}>Aucune demande</p></div>
             ) : approvals.map((req, i) => (
-              <div key={req.id} style={{ background: '#ffffff', border: '2px solid #2d2d2d', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px #2d2d2d', padding: '20px 24px', transform: `rotate(${i % 2 === 0 ? '-0.3deg' : '0.3deg'})` }}>
+              <div key={req.id} style={{ background: 'var(--card-bg)', border: '2px solid var(--border)', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px var(--shadow)', padding: '20px 24px', transform: `rotate(${i % 2 === 0 ? '-0.3deg' : '0.3deg'})` }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '16px' }} className="admin-grid">
                   <div>
-                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#888', marginBottom: '2px' }}>NOM</p>
-                    <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.1rem', margin: 0 }}>{req.first_name} {req.last_name}</p>
+                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: 'var(--muted-text)', marginBottom: '2px' }}>NOM</p>
+                    <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.1rem', margin: 0, color: 'var(--fg)' }}>{req.first_name} {req.last_name}</p>
                   </div>
                   <div>
-                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#888', marginBottom: '2px' }}>EMAIL</p>
-                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', margin: 0 }}>{req.email}</p>
+                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: 'var(--muted-text)', marginBottom: '2px' }}>EMAIL</p>
+                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '1rem', margin: 0, color: 'var(--fg)' }}>{req.email}</p>
                   </div>
                   <div>
-                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#888', marginBottom: '2px' }}>STATUT</p>
-                    <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', padding: '3px 12px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', background: req.status === 'pending' ? '#f0faf4' : req.status === 'approved' ? '#d4edda' : '#fde8e8', border: '1px solid #2d2d2d' }}>
+                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: 'var(--muted-text)', marginBottom: '2px' }}>STATUT</p>
+                    <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', padding: '3px 12px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', background: req.status === 'approved' ? 'rgba(45,138,78,0.15)' : req.status === 'rejected' ? 'rgba(204,51,51,0.12)' : 'var(--yellow)', color: req.status === 'approved' ? 'var(--accent)' : req.status === 'rejected' ? 'var(--danger)' : 'var(--fg)', border: '1px solid var(--border)' }}>
                       {req.status === 'pending' ? 'En attente' : req.status === 'approved' ? 'Approuvé' : 'Rejeté'}
                     </span>
                   </div>
                 </div>
                 {req.status === 'pending' && (
                   <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn-primary" onClick={() => openModal('Approuver la demande', `Approuver l'accès pour ${req.first_name} ${req.last_name} (${req.email}) ?`, 'Approuver', false, () => handleApprove(req.id))} disabled={actionLoading === req.id} style={{ flex: 1, opacity: actionLoading === req.id ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <button className="btn-primary" onClick={() => openModal('Approuver la demande', `Approuver l'accès pour ${req.first_name} ${req.last_name} ?`, 'Approuver', false, () => handleApprove(req.id))} disabled={actionLoading === req.id} style={{ flex: 1, opacity: actionLoading === req.id ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                       <Check size={16} strokeWidth={2.5} /> {actionLoading === req.id ? '...' : 'Approuver'}
                     </button>
                     <button className="btn-danger" onClick={() => openModal('Rejeter la demande', `Rejeter la demande de ${req.first_name} ${req.last_name} ?`, 'Rejeter', true, () => handleReject(req.id))} disabled={actionLoading === req.id} style={{ flex: 1, opacity: actionLoading === req.id ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -320,26 +302,22 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
         {activeTab === 'books' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {books.length === 0 ? (
-              <div className="card-yellow" style={{ textAlign: 'center', padding: '48px' }}><p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.3rem' }}>Aucun livre listé</p></div>
+              <div className="card-yellow" style={{ textAlign: 'center', padding: '48px' }}><p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.3rem', color: 'var(--fg)' }}>Aucun livre listé</p></div>
             ) : books.map((book, i) => (
-              <div key={book.id} style={{ background: '#ffffff', border: '2px solid #2d2d2d', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px #2d2d2d', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', transform: `rotate(${i % 2 === 0 ? '-0.2deg' : '0.2deg'})`, flexWrap: 'wrap' }}>
+              <div key={book.id} style={{ background: 'var(--card-bg)', border: '2px solid var(--border)', borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: '4px 4px 0px 0px var(--shadow)', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', transform: `rotate(${i % 2 === 0 ? '-0.2deg' : '0.2deg'})`, flexWrap: 'wrap' }}>
                 <div>
-                  <h3 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.2rem', marginBottom: '4px' }}>{book.title}</h3>
-                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: '#555', margin: 0 }}>Propriétaire : {book.owner_email}</p>
-                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#888', margin: 0 }}>
+                  <h3 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.2rem', marginBottom: '4px', color: 'var(--fg)' }}>{book.title}</h3>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: 'var(--subtle)', margin: 0 }}>Propriétaire : {book.owner_email}</p>
+                  <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: 'var(--muted-text)', margin: 0 }}>
                     Ajouté le {new Date(book.created_at).toLocaleDateString('fr-FR')} —{' '}
-                    <span style={{ color: book.is_available ? '#2d8a4e' : '#cc3333', fontWeight: 700 }}>
+                    <span style={{ color: book.is_available ? 'var(--accent)' : 'var(--danger)', fontWeight: 700 }}>
                       {book.is_available ? 'Disponible' : 'Échangé'}
                     </span>
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {!book.is_available && (
-                    <button
-                      onClick={() => handleRestoreBook(book.id)}
-                      disabled={actionLoading === book.id + '-restore'}
-                      style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', padding: '8px 16px', background: '#f0faf4', color: '#2d8a4e', border: '2px solid #2d8a4e', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', boxShadow: '3px 3px 0px 0px #2d8a4e', cursor: 'pointer', transition: 'all 0.1s ease', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', opacity: actionLoading === book.id + '-restore' ? 0.6 : 1 }}
-                    >
+                    <button onClick={() => handleRestoreBook(book.id)} disabled={actionLoading === book.id + '-restore'} style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', padding: '8px 16px', background: 'var(--yellow)', color: 'var(--accent)', border: '2px solid var(--accent)', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', boxShadow: '3px 3px 0px 0px var(--accent)', cursor: 'pointer', transition: 'all 0.1s ease', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', opacity: actionLoading === book.id + '-restore' ? 0.6 : 1 }}>
                       <RotateCcw size={14} strokeWidth={2.5} /> Restaurer
                     </button>
                   )}
@@ -356,36 +334,36 @@ export default function AdminDashboard({ userRole, user }: AdminDashboardProps) 
         {activeTab === 'users' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {users.length === 0 ? (
-              <div className="card-yellow" style={{ textAlign: 'center', padding: '48px' }}><p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.3rem' }}>Vous êtes le seul utilisateur</p></div>
+              <div className="card-yellow" style={{ textAlign: 'center', padding: '48px' }}><p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.3rem', color: 'var(--fg)' }}>Vous êtes le seul utilisateur</p></div>
             ) : users.map((u, i) => (
-              <div key={u.id} style={{ background: u.is_banned ? '#fff0f0' : '#ffffff', border: `2px solid ${u.is_banned ? '#cc3333' : '#2d2d2d'}`, borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: `4px 4px 0px 0px ${u.is_banned ? '#cc3333' : '#2d2d2d'}`, padding: '20px 24px', transform: `rotate(${i % 2 === 0 ? '-0.2deg' : '0.2deg'})` }}>
+              <div key={u.id} style={{ background: u.is_banned ? 'rgba(204,51,51,0.08)' : 'var(--card-bg)', border: `2px solid ${u.is_banned ? 'var(--danger)' : 'var(--border)'}`, borderRadius: '30px 5px 25px 8px / 8px 25px 5px 30px', boxShadow: `4px 4px 0px 0px ${u.is_banned ? 'var(--danger)' : 'var(--shadow)'}`, padding: '20px 24px', transform: `rotate(${i % 2 === 0 ? '-0.2deg' : '0.2deg'})` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                      <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.1rem', margin: 0 }}>{(u.first_name || u.last_name) ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() : u.email}</p>
+                      <p style={{ fontFamily: 'Kalam, cursive', fontSize: '1.1rem', margin: 0, color: 'var(--fg)' }}>{(u.first_name || u.last_name) ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() : u.email}</p>
                       {roleBadge(u.role)}
                       {u.is_banned && (
-                        <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', background: '#fde8e8', color: '#cc3333', border: '1px solid #cc3333', padding: '2px 8px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', background: 'rgba(204,51,51,0.12)', color: 'var(--danger)', border: '1px solid var(--danger)', padding: '2px 8px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <Ban size={11} strokeWidth={2.5} /> Banni
                         </span>
                       )}
                       {u.is_revoked && !u.is_banned && (
-                        <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', background: '#fff3cd', color: '#856404', border: '1px solid #856404', padding: '2px 8px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', background: 'rgba(133,100,4,0.12)', color: '#856404', border: '1px solid #856404', padding: '2px 8px', borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <AlertTriangle size={11} strokeWidth={2.5} /> Révoqué
                         </span>
                       )}
                     </div>
-                    {(u.first_name || u.last_name) && <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: '#555', margin: '0 0 2px' }}>{u.email}</p>}
-                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: '#888', margin: 0 }}>Membre depuis {new Date(u.created_at).toLocaleDateString('fr-FR')}</p>
+                    {(u.first_name || u.last_name) && <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.9rem', color: 'var(--subtle)', margin: '0 0 2px' }}>{u.email}</p>}
+                    <p style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.8rem', color: 'var(--muted-text)', margin: 0 }}>Membre depuis {new Date(u.created_at).toLocaleDateString('fr-FR')}</p>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {isAdminOrOwner && u.role !== 'owner' && (
-                      <button className="btn-secondary" onClick={() => openModal('Expulser l\'utilisateur', `Révoquer l'accès de ${u.email} ? Il sera déconnecté.`, 'Expulser', true, () => handleKickUser(u.id, u.email))} disabled={actionLoading === u.id} style={{ fontSize: '0.85rem', padding: '6px 12px', opacity: actionLoading === u.id ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button className="btn-secondary" onClick={() => openModal("Expulser l'utilisateur", `Révoquer l'accès de ${u.email} ?`, 'Expulser', true, () => handleKickUser(u.id, u.email))} disabled={actionLoading === u.id} style={{ fontSize: '0.85rem', padding: '6px 12px', opacity: actionLoading === u.id ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <UserX size={14} strokeWidth={2.5} /> Expulser
                       </button>
                     )}
                     {isAdminOrOwner && u.role !== 'owner' && (
-                      <button onClick={() => openModal(u.is_banned ? 'Débannir l\'utilisateur' : 'Bannir l\'utilisateur', `${u.is_banned ? 'Débannir' : 'Bannir'} ${u.email} ?`, u.is_banned ? 'Débannir' : 'Bannir', !u.is_banned, () => handleBanUser(u.id, u.is_banned ?? false))} disabled={actionLoading === u.id} style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', padding: '6px 12px', background: u.is_banned ? '#d4edda' : '#fde8e8', color: u.is_banned ? '#1a6b3a' : '#cc3333', border: `2px solid ${u.is_banned ? '#1a6b3a' : '#cc3333'}`, borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', boxShadow: `3px 3px 0px 0px ${u.is_banned ? '#1a6b3a' : '#cc3333'}`, cursor: 'pointer', transition: 'all 0.1s ease', opacity: actionLoading === u.id ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button onClick={() => openModal(u.is_banned ? "Débannir l'utilisateur" : "Bannir l'utilisateur", `${u.is_banned ? 'Débannir' : 'Bannir'} ${u.email} ?`, u.is_banned ? 'Débannir' : 'Bannir', !u.is_banned, () => handleBanUser(u.id, u.is_banned ?? false))} disabled={actionLoading === u.id} style={{ fontFamily: 'Patrick Hand, cursive', fontSize: '0.85rem', padding: '6px 12px', background: u.is_banned ? 'rgba(45,138,78,0.15)' : 'rgba(204,51,51,0.12)', color: u.is_banned ? 'var(--accent)' : 'var(--danger)', border: `2px solid ${u.is_banned ? 'var(--accent)' : 'var(--danger)'}`, borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px', boxShadow: `3px 3px 0px 0px ${u.is_banned ? 'var(--accent)' : 'var(--danger)'}`, cursor: 'pointer', transition: 'all 0.1s ease', opacity: actionLoading === u.id ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {u.is_banned ? <><UserCheck size={14} strokeWidth={2.5} /> Débannir</> : <><Ban size={14} strokeWidth={2.5} /> Bannir</>}
                       </button>
                     )}

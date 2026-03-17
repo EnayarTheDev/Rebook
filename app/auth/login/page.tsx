@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LogIn, AlertCircle } from 'lucide-react';
@@ -10,7 +10,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem('rebook-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,34 +43,30 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: '#fdfbf7', backgroundImage: 'radial-gradient(#e5e0d8 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'var(--bg)', backgroundImage: 'radial-gradient(var(--dot-color) 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
       <div style={{ width: '100%', maxWidth: '440px' }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
-          <img
-            src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png"
-            alt="ReBook"
-            style={{ height: '48px', width: 'auto' }}
-          />
+          <img src="https://hxpmqzzstnjhmmvalflj.supabase.co/storage/v1/object/public/assets/rebook-logo-cropped.png" alt="ReBook" style={{ height: '48px', width: 'auto' }} />
         </div>
         <div className="card" style={{ position: 'relative' }}>
           <div className="tape" />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px', marginTop: '8px' }}>
-            <LogIn size={24} strokeWidth={2} color="#2d8a4e" />
-            <h2 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.8rem', margin: 0 }}>Connexion</h2>
+            <LogIn size={24} strokeWidth={2} color="var(--accent)" />
+            <h2 style={{ fontFamily: 'Kalam, cursive', fontSize: '1.8rem', margin: 0, color: 'var(--fg)' }}>Connexion</h2>
           </div>
           {error && (
-            <div style={{ marginBottom: '20px', padding: '12px 16px', background: '#fde8e8', border: '2px solid #cc3333', borderRadius: '6px 3px 8px 3px / 3px 8px 3px 6px', boxShadow: '2px 2px 0px 0px #cc3333', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertCircle size={16} strokeWidth={2.5} color="#cc3333" />
-              <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#cc3333', margin: 0 }}>{error}</p>
+            <div style={{ marginBottom: '20px', padding: '12px 16px', background: 'rgba(204,51,51,0.1)', border: '2px solid var(--danger)', borderRadius: '6px 3px 8px 3px / 3px 8px 3px 6px', boxShadow: '2px 2px 0px 0px var(--danger)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={16} strokeWidth={2.5} color="var(--danger)" />
+              <p style={{ fontFamily: 'Patrick Hand, cursive', color: 'var(--danger)', margin: 0 }}>{error}</p>
             </div>
           )}
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Email</label>
+              <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px', color: 'var(--fg)' }}>Email</label>
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="input-wobbly" placeholder="ton@email.com" />
             </div>
             <div>
-              <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px' }}>Mot de passe</label>
+              <label style={{ fontFamily: 'Kalam, cursive', fontSize: '1rem', display: 'block', marginBottom: '6px', color: 'var(--fg)' }}>Mot de passe</label>
               <input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="input-wobbly" placeholder="••••••••" />
             </div>
             <button type="submit" disabled={isLoading} className="btn-primary" style={{ fontSize: '1.1rem', padding: '12px', marginTop: '8px', opacity: isLoading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -68,9 +74,9 @@ export default function LoginPage() {
               {isLoading ? 'Connexion...' : 'Se connecter'}
             </button>
           </form>
-          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed #2d2d2d', textAlign: 'center' }}>
-            <p style={{ fontFamily: 'Patrick Hand, cursive', color: '#555', marginBottom: '8px' }}>Pas encore de compte ?</p>
-            <a href="/auth/request-approval" style={{ fontFamily: 'Patrick Hand, cursive', color: '#2d8a4e', textDecoration: 'underline wavy #2d8a4e 2px' }}>Demander l'accès →</a>
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed var(--border)', textAlign: 'center' }}>
+            <p style={{ fontFamily: 'Patrick Hand, cursive', color: 'var(--subtle)', marginBottom: '8px' }}>Pas encore de compte ?</p>
+            <a href="/auth/request-approval" style={{ fontFamily: 'Patrick Hand, cursive', color: 'var(--accent)', textDecoration: 'underline wavy var(--accent) 2px' }}>Demander l'accès →</a>
           </div>
         </div>
       </div>
